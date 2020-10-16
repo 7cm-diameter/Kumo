@@ -1,21 +1,40 @@
 extern crate yup_oauth2 as oauth2;
 
-use oauth2::{read_application_secret, InstalledFlowAuthenticator, InstalledFlowReturnMethod::HTTPRedirect};
+use kumo::gdrive::app::GoogleDriveClient;
+use serde_json::Value;
 
 #[tokio::main]
 async fn main() {
-  let secret = read_application_secret("clientsecret.json").await.unwrap();
+  let scopes = &[
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive.metadata",
+  ];
 
-  let mut auth = InstalledFlowAuthenticator::builder(secret, HTTPRedirect)
-    .persist_tokens_to_disk("tokencache.json")
-    .build()
-    .await
-    .unwrap();
+  println!("1");
+  let app = GoogleDriveClient::default(scopes).await;
 
-  let scopes = &["https://www.googleapis.com/auth/drive.file"];
+  println!("2");
+  if app.is_expired() {
+    println!("Token is expired");
+  } else {
+    println!("3");
+    let response = app
+      .client
+      .get("https://www.googleapis.com/drive/v3/files")
+      .bearer_auth(app.access_token())
+      .send()
+      .await
+      .unwrap();
 
-  match auth.token(scopes).await {
-    Ok(token) => println!("The token is {:?}", &token),
-    Err(e) => println!("error: {:?}", &e),
-  };
+    println!("4");
+    let ls = response
+      .json::<Value>()
+      .await
+      .unwrap()
+      .get("files")
+      .unwrap()
+      .clone();
+    println!("{:?}", &ls);
+  }
 }

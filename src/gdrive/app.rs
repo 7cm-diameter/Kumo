@@ -13,7 +13,7 @@ pub struct GoogleDriveClient {
 }
 
 impl GoogleDriveClient {
-  // TODO: Handling error and  token expiration
+  // TODO: Handling error
   pub async fn default(scopes: &[&str]) -> Self {
     let secret = read_application_secret("clientsecret.json").await.unwrap();
 

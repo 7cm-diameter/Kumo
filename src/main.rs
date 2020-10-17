@@ -1,18 +1,20 @@
 extern crate yup_oauth2 as oauth2;
 
-use kumo::gdrive::app::GoogleDriveClient;
-use serde_json::Value;
+use kumo::gdrive::{
+  app::GoogleDriveClient,
+  response::{File, FileList},
+};
+
+const SCOPES: &[&str] = &[
+  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/drive.metadata",
+];
 
 #[tokio::main]
 async fn main() {
-  let scopes = &[
-    "https://www.googleapis.com/auth/drive",
-    "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/drive.metadata",
-  ];
+  let app = GoogleDriveClient::default(SCOPES).await;
 
-  let app = GoogleDriveClient::default(scopes).await;
-  println!("3");
   let response = app
     .client
     .get("https://www.googleapis.com/drive/v3/files")
@@ -21,13 +23,8 @@ async fn main() {
     .await
     .unwrap();
 
-  let ls = response
-    .json::<Value>()
-    .await
-    .unwrap()
-    .get("files")
-    .unwrap()
-    .clone();
-
-  println!("{:?}", &ls);
+  let x = response.json::<FileList>().await.unwrap();
+  x.files.iter().for_each(|f: &File| {
+    println!("{:}", &f.name);
+  })
 }

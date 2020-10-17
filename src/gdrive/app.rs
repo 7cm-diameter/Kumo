@@ -1,11 +1,11 @@
 extern crate yup_oauth2 as oauth2;
 
+use crate::gdrive::{api, response};
 use oauth2::{
   read_application_secret, AccessToken, InstalledFlowAuthenticator,
   InstalledFlowReturnMethod::HTTPRedirect,
 };
 use reqwest::Client;
-// use serde_json::Value;
 
 pub struct GoogleDriveClient {
   access_token: AccessToken,
@@ -43,5 +43,11 @@ impl GoogleDriveClient {
 
   pub fn access_token(&self) -> &str {
     self.access_token.as_str()
+  }
+}
+
+impl GoogleDriveClient {
+  pub async fn files_list(self) -> response::FileList {
+    api::files_list(&self.client, self.access_token()).await
   }
 }

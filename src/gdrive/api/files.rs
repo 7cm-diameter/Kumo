@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct FileListQuery {
+pub struct FilesListQuery {
   drive_id:                      Option<String>,
   include_items_form_all_drives: bool,
   order_by:                      Option<String>,

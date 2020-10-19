@@ -1,6 +1,9 @@
 extern crate yup_oauth2 as oauth2;
 
-use kumo::gdrive::{app::GoogleDriveClient, response::File};
+use kumo::gdrive::{
+  app::GoogleDriveClient,
+  response::{Drive, File},
+};
 
 const SCOPES: &[&str] = &[
   "https://www.googleapis.com/auth/drive",
@@ -16,5 +19,11 @@ async fn main() {
 
   x.files.iter().for_each(|f: &File| {
     println!("{:}: {:}", &f.name, &f.id);
+  });
+
+  let x = app.drives_list().await;
+
+  x.drives.iter().for_each(|d: &Drive| {
+    println!("{:}: {:}", &d.name, &d.id);
   })
 }

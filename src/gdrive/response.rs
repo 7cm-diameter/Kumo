@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct FileList {
   pub kind:              String,
-  pub next_page_token:   String,
+  pub next_page_token:   Option<String>,
   pub incomplete_search: bool,
   pub files:             Vec<File>,
 }
@@ -18,4 +18,22 @@ pub struct File {
   pub kind:      String,
   pub mime_type: String,
   pub name:      String,
+}
+
+// https://developers.google.com/drive/api/v3/reference/drives/list
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DriveList {
+  pub kind:            String,
+  pub next_page_token: Option<String>,
+  pub drives:          Vec<Drive>,
+}
+
+// https://developers.google.com/drive/api/v3/reference/drives#resource
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Drive {
+  pub id:   String,
+  pub kind: String,
+  pub name: String,
 }

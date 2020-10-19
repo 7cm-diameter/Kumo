@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileList {
-  pub kind:              String,
+  pub kind:              Option<String>,
   pub next_page_token:   Option<String>,
-  pub incomplete_search: bool,
+  pub incomplete_search: Option<bool>,
   pub files:             Vec<File>,
 }
 

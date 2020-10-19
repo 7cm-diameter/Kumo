@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct FilesListQuery {
   drive_id:                      Option<String>,
   include_items_form_all_drives: bool,
+  q:                             Option<String>,
   order_by:                      Option<String>,
   page_size:                     u16,
   page_token:                    Option<String>,
@@ -51,6 +52,7 @@ impl Default for FilesListQuery {
     Self {
       drive_id:                      None,
       include_items_form_all_drives: false,
+      q:                             None,
       order_by:                      None,
       page_size:                     100,
       page_token:                    None,
@@ -66,6 +68,11 @@ impl FilesListQuery {
 
   pub fn include_items_form_all_drives(mut self, include: bool) -> Self {
     self.include_items_form_all_drives = include;
+    self
+  }
+
+  pub fn set_q(mut self, q: String) -> Self {
+    self.q = Some(q);
     self
   }
 

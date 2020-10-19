@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct DrivesListQuery {
   page_size:  u16,
   page_token: Option<String>,
+  q:          Option<String>,
 }
 
 impl Default for DrivesListQuery {
@@ -15,6 +16,7 @@ impl Default for DrivesListQuery {
     Self {
       page_size:  100,
       page_token: None,
+      q:          None,
     }
   }
 }
@@ -27,6 +29,11 @@ impl DrivesListQuery {
 
   pub fn set_page_token(mut self, token: String) -> Self {
     self.page_token = Some(token);
+    self
+  }
+
+  pub fn set_q(mut self, q: String) -> Self {
+    self.q = Some(q);
     self
   }
 }

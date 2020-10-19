@@ -15,6 +15,6 @@ async fn main() {
   let x = app.files_list().await;
 
   x.files.iter().for_each(|f: &File| {
-    println!("{:}", &f.name);
+    println!("{:}: {:}", &f.name, &f.id);
   })
 }

@@ -1,7 +1,7 @@
 extern crate yup_oauth2 as oauth2;
 
 use kumo::gdrive::{
-  api::files::{FileListQuery, Order},
+  api::files::{FilesListQuery, Order},
   app::GoogleDriveClient,
   response::{Drive, File},
 };
@@ -18,7 +18,7 @@ async fn main() {
 
   let x = app
     .files_list(
-      FileListQuery::default()
+      FilesListQuery::default()
         .set_page_size(1000)
         .include_items_form_all_drives(true)
         .set_order(Order::Name),

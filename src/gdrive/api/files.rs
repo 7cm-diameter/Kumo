@@ -46,7 +46,7 @@ impl ToString for Order {
   }
 }
 
-impl Default for FileListQuery {
+impl Default for FilesListQuery {
   fn default() -> Self {
     Self {
       drive_id:                      None,
@@ -58,7 +58,7 @@ impl Default for FileListQuery {
   }
 }
 
-impl FileListQuery {
+impl FilesListQuery {
   pub fn set_drive_id(mut self, drive_id: String) -> Self {
     self.drive_id = Some(drive_id);
     self
@@ -88,7 +88,7 @@ impl FileListQuery {
 pub async fn files_list(
   client: &Client,
   access_token: &str,
-  params: FileListQuery,
+  params: FilesListQuery,
 ) -> response::FileList {
   client
     .get("https://www.googleapis.com/drive/v3/files")

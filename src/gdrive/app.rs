@@ -47,7 +47,7 @@ impl GoogleDriveClient {
 }
 
 impl GoogleDriveClient {
-  pub async fn files_list(&self, params: api::files::FileListQuery) -> response::FileList {
+  pub async fn files_list(&self, params: api::files::FilesListQuery) -> response::FileList {
     api::files::files_list(&self.client, self.access_token(), params).await
   }
 

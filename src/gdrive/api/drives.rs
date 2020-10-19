@@ -1,8 +1,24 @@
-use crate::gdrive::response;
 use reqwest::Client;
 
 use serde::{Deserialize, Serialize};
 
+// https://developers.google.com/drive/api/v3/reference/drives/list
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DriveList {
+  pub kind:            String,
+  pub next_page_token: Option<String>,
+  pub drives:          Vec<Drive>,
+}
+
+// https://developers.google.com/drive/api/v3/reference/drives#resource
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Drive {
+  pub id:   String,
+  pub kind: String,
+  pub name: String,
+}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DrivesListQuery {
@@ -42,7 +58,7 @@ pub async fn drives_list(
   client: &Client,
   access_token: &str,
   params: DrivesListQuery,
-) -> response::DriveList {
+) -> DriveList {
   client
     .get("https://www.googleapis.com/drive/v3/drives")
     .bearer_auth(access_token)

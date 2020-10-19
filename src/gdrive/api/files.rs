@@ -1,7 +1,26 @@
-use crate::gdrive::response;
 use reqwest::Client;
 
 use serde::{Deserialize, Serialize};
+
+// https://developers.google.com/drive/api/v3/reference/files/list
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileList {
+  pub kind:              Option<String>,
+  pub next_page_token:   Option<String>,
+  pub incomplete_search: Option<bool>,
+  pub files:             Vec<File>,
+}
+
+// https://developers.google.com/drive/api/v3/reference/files#resource
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct File {
+  pub id:        String,
+  pub kind:      String,
+  pub mime_type: String,
+  pub name:      String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -92,11 +111,7 @@ impl FilesListQuery {
   }
 }
 
-pub async fn files_list(
-  client: &Client,
-  access_token: &str,
-  params: FilesListQuery,
-) -> response::FileList {
+pub async fn files_list(client: &Client, access_token: &str, params: FilesListQuery) -> FileList {
   client
     .get("https://www.googleapis.com/drive/v3/files")
     .bearer_auth(access_token)

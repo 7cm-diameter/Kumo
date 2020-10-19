@@ -1,6 +1,6 @@
 extern crate yup_oauth2 as oauth2;
 
-use crate::gdrive::{api, response};
+use crate::gdrive::api;
 use oauth2::{
   read_application_secret, AccessToken, InstalledFlowAuthenticator,
   InstalledFlowReturnMethod::HTTPRedirect,
@@ -47,11 +47,11 @@ impl GoogleDriveClient {
 }
 
 impl GoogleDriveClient {
-  pub async fn files_list(&self, params: api::files::FilesListQuery) -> response::FileList {
+  pub async fn files_list(&self, params: api::files::FilesListQuery) -> api::files::FileList {
     api::files::files_list(&self.client, self.access_token(), params).await
   }
 
-  pub async fn drives_list(&self, params: api::drives::DrivesListQuery) -> response::DriveList {
+  pub async fn drives_list(&self, params: api::drives::DrivesListQuery) -> api::drives::DriveList {
     api::drives::drives_list(&self.client, self.access_token(), params).await
   }
 }

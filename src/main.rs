@@ -1,7 +1,10 @@
 extern crate yup_oauth2 as oauth2;
 
 use kumo::gdrive::{
-  api::files::{FilesListQuery, Order},
+  api::{
+    drives::DrivesListQuery,
+    files::{FilesListQuery, Order},
+  },
   app::GoogleDriveClient,
   response::{Drive, File},
 };
@@ -29,7 +32,7 @@ async fn main() {
     println!("{:}: {:}", &f.name, &f.id);
   });
 
-  let x = app.drives_list().await;
+  let x = app.drives_list(DrivesListQuery::default()).await;
 
   x.drives.iter().for_each(|d: &Drive| {
     println!("{:}: {:}", &d.name, &d.id);

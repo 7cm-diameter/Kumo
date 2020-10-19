@@ -16,10 +16,10 @@ pub struct FileList {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct File {
-  pub id:        String,
   pub kind:      String,
-  pub mime_type: String,
+  pub id:        String,
   pub name:      String,
+  pub mime_type: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

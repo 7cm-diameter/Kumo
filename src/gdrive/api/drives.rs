@@ -15,10 +15,11 @@ pub struct DriveList {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Drive {
-  pub id:   String,
   pub kind: String,
+  pub id:   String,
   pub name: String,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DrivesListQuery {

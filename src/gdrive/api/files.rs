@@ -140,8 +140,8 @@ impl Default for FilesListQuery {
 }
 
 impl FilesListQuery {
-  pub fn set_drive_id(mut self, drive_id: String) -> Self {
-    self.drive_id = Some(drive_id);
+  pub fn set_drive_id(mut self, drive_id: &str) -> Self {
+    self.drive_id = Some(String::from(drive_id));
     self
   }
 
@@ -166,8 +166,8 @@ impl FilesListQuery {
     self
   }
 
-  pub fn set_q(mut self, q: String) -> Self {
-    self.q = Some(q);
+  pub fn set_q(mut self, q: &str) -> Self {
+    self.q = Some(String::from(q));
     self
   }
 
@@ -181,8 +181,8 @@ impl FilesListQuery {
     self
   }
 
-  pub fn set_page_token(mut self, token: String) -> Self {
-    self.page_token = Some(token);
+  pub fn set_page_token(mut self, token: &str) -> Self {
+    self.page_token = Some(String::from(token));
     self
   }
 }

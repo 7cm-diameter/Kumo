@@ -44,13 +44,13 @@ impl DrivesListQuery {
     self
   }
 
-  pub fn set_page_token(mut self, token: String) -> Self {
-    self.page_token = Some(token);
+  pub fn set_page_token(mut self, token: &str) -> Self {
+    self.page_token = Some(String::from(token));
     self
   }
 
-  pub fn set_q(mut self, q: String) -> Self {
-    self.q = Some(q);
+  pub fn set_q(mut self, q: &str) -> Self {
+    self.q = Some(String::from(q));
     self
   }
 }

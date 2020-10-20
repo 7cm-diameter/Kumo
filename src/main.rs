@@ -22,7 +22,14 @@ async fn main() {
     .await;
 
   x.files.iter().for_each(|f: &api::files::File| {
-    println!("{:}: {:}", &f.name, &f.id);
+    println!(
+      "{:?}: {:?}: {:?}: {:?}: {:?}",
+      &f.name.as_ref(),
+      &f.id.as_ref(),
+      &f.created_time.as_ref(),
+      &f.modified_time.as_ref(),
+      &f.web_content_link.as_ref()
+    );
   });
 
   let x = app

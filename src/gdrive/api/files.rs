@@ -1,5 +1,6 @@
 use reqwest::Client;
 
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 // https://developers.google.com/drive/api/v3/reference/files/list
@@ -16,10 +17,17 @@ pub struct FileList {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct File {
-  pub kind:      String,
-  pub id:        String,
-  pub name:      String,
-  pub mime_type: String,
+  pub kind:             Option<String>,
+  pub id:               Option<String>,
+  pub name:             Option<String>,
+  pub mime_type:        Option<String>,
+  pub description:      Option<String>,
+  pub trashed:          Option<bool>,
+  pub parents:          Option<Vec<String>>,
+  pub web_content_link: Option<String>,
+  pub web_view_link:    Option<String>,
+  pub created_time:     Option<DateTime<Local>>,
+  pub modified_time:    Option<DateTime<Local>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,10 +35,54 @@ pub struct File {
 pub struct FilesListQuery {
   drive_id:                      Option<String>,
   include_items_form_all_drives: bool,
+  fields:                        String,
   q:                             Option<String>,
   order_by:                      Option<String>,
   page_size:                     u16,
   page_token:                    Option<String>,
+}
+
+#[derive(Clone)]
+pub enum Field {
+  Kind,
+  Id,
+  Name,
+  MimeType,
+  Description,
+  Trashed,
+  Parents,
+  WebContentLink,
+  WebViewLink,
+  CreatedTime,
+  ModifiedTime,
+}
+
+impl ToString for Field {
+  fn to_string(&self) -> String {
+    let s = match self {
+      Field::Kind => "kind",
+      Field::Id => "id",
+      Field::Name => "name",
+      Field::MimeType => "mimeType",
+      Field::Description => "description",
+      Field::Trashed => "trashed",
+      Field::Parents => "parents",
+      Field::WebContentLink => "webContentLink",
+      Field::WebViewLink => "webViewLink",
+      Field::CreatedTime => "createdTime",
+      Field::ModifiedTime => "modifiedTime",
+    };
+    String::from(s)
+  }
+}
+
+fn fields_to_query(fields: &[Field]) -> String {
+  let mut query = fields
+    .iter()
+    .fold(String::from("files("), |acc, s| acc + &s.to_string() + ",");
+  query.pop(); // remove redundant `,` from the query.
+  query += ")";
+  query
 }
 
 pub enum Order {
@@ -71,6 +123,14 @@ impl Default for FilesListQuery {
     Self {
       drive_id:                      None,
       include_items_form_all_drives: false,
+      fields:                        fields_to_query(&[
+        Field::Id,
+        Field::Name,
+        Field::MimeType,
+        Field::CreatedTime,
+        Field::ModifiedTime,
+        Field::WebContentLink,
+      ]),
       q:                             None,
       order_by:                      None,
       page_size:                     100,
@@ -82,6 +142,22 @@ impl Default for FilesListQuery {
 impl FilesListQuery {
   pub fn set_drive_id(mut self, drive_id: String) -> Self {
     self.drive_id = Some(drive_id);
+    self
+  }
+
+  pub fn set_fields(mut self, fields: &[Field]) -> Self {
+    self.fields = fields_to_query(fields);
+    self
+  }
+
+  pub fn add_fields(mut self, fields: &[Field]) -> Self {
+    let mut additional = fields
+      .iter()
+      .fold(String::from(","), |acc, s| acc + &s.to_string() + ",");
+    additional.pop(); // remove redundant `,` from the query.
+    self.fields.pop(); // remove right paren from the existed field query.
+    self.fields += &additional;
+    self.fields += ")";
     self
   }
 

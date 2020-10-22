@@ -22,21 +22,6 @@ async fn main() {
     .await;
 
   x.files.iter().for_each(|f: &api::files::File| {
-    println!(
-      "{:?}: {:?}: {:?}: {:?}: {:?}",
-      &f.name.as_ref(),
-      &f.id.as_ref(),
-      &f.created_time.as_ref(),
-      &f.modified_time.as_ref(),
-      &f.web_content_link.as_ref()
-    );
+    println!("{:?}: {:?}", &f.name.as_ref(), &f.web_content_link.as_ref());
   });
-
-  let x = app
-    .drives_list(api::drives::DrivesListQuery::default())
-    .await;
-
-  x.drives.iter().for_each(|d: &api::drives::Drive| {
-    println!("{:}: {:}", &d.name, &d.id);
-  })
 }

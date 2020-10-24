@@ -118,7 +118,6 @@ impl ToString for Order {
     String::from(s)
   }
 }
-
 impl Default for FilesListQuery {
   fn default() -> Self {
     Self {
@@ -130,7 +129,6 @@ impl Default for FilesListQuery {
         Field::MimeType,
         Field::CreatedTime,
         Field::ModifiedTime,
-        Field::WebContentLink,
       ]),
       q:                             None,
       order_by:                      None,

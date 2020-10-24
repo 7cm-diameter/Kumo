@@ -1,4 +1,5 @@
 use reqwest::Client;
+use std::{fs, io};
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
@@ -198,4 +199,19 @@ pub async fn files_list(client: &Client, access_token: &str, params: FilesListQu
     .json()
     .await
     .unwrap()
+}
+
+pub async fn fetch_file(client: &Client, access_token: &str, file: &File) {
+  let response = client
+    .get(&format!(
+      "https://www.googleapis.com/drive/v3/files/{:}?alt=media",
+      file.id.as_ref().unwrap()
+    ))
+    .bearer_auth(access_token)
+    .send()
+    .await
+    .unwrap();
+
+  let mut f = fs::File::create(file.name.as_ref().unwrap()).unwrap();
+  io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
 }

@@ -1,5 +1,5 @@
 use reqwest::Client;
-use std::{fs, io};
+use std::{fs, io, path::PathBuf};
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
@@ -199,7 +199,13 @@ pub async fn files_list(client: &Client, access_token: &str, params: FilesListQu
     .unwrap()
 }
 
-pub async fn fetch_file(client: &Client, access_token: &str, file: &File) {
+pub async fn fetch_file(
+  client: &Client,
+  access_token: &str,
+  file: &File,
+  parent: Option<&str>,
+  filename: Option<&str>,
+) {
   let response = client
     .get(&format!(
       "https://www.googleapis.com/drive/v3/files/{:}?alt=media",
@@ -210,6 +216,15 @@ pub async fn fetch_file(client: &Client, access_token: &str, file: &File) {
     .await
     .unwrap();
 
-  let mut f = fs::File::create(file.name.as_ref().unwrap()).unwrap();
+  let filename = filename.unwrap_or_else(|| file.name.as_ref().unwrap());
+
+  let filename = if let Some(path) = parent {
+    PathBuf::from(path).join(filename)
+  } else {
+    PathBuf::from(filename)
+  };
+
+  let mut f = fs::File::create(filename).unwrap();
+
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
 }

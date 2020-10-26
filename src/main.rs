@@ -25,5 +25,5 @@ async fn main() {
     println!("{:?}: {:?}", &f.name.as_ref(), &f.id.as_ref());
   });
 
-  app.fetch_file(&x.files[2]).await;
+  app.fetch_file(&x.files[2], None, None).await;
 }

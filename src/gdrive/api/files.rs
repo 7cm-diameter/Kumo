@@ -1,4 +1,5 @@
 use reqwest::Client;
+use serde_json::json;
 use std::{fs, io, path::PathBuf};
 
 use chrono::{DateTime, Local};
@@ -227,4 +228,22 @@ pub async fn fetch_file(
   let mut f = fs::File::create(filename).unwrap();
 
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
+}
+
+pub async fn create_file(client: &Client, access_token: &str) {
+  let file = fs::read("./hoge.csv").unwrap();
+  let response = client
+    .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart")
+    .bearer_auth(access_token)
+    .header(reqwest::header::CONTENT_TYPE, "multipart/related")
+    .json(&json!({
+      "name": "hoge.csv",
+      "mimeType": "text/csv"
+    }))
+    .body(file)
+    .send()
+    .await
+    .unwrap();
+
+  println!("{:?}", response);
 }

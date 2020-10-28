@@ -53,7 +53,7 @@ impl GoogleDriveClient {
 
   pub async fn fetch_file(
     &self,
-    file: &api::files::File,
+    file: &api::files::FileMeta,
     parent: Option<&str>,
     filename: Option<&str>,
   ) {

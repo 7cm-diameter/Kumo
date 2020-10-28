@@ -12,13 +12,13 @@ pub struct FileList {
   pub kind:              Option<String>,
   pub next_page_token:   Option<String>,
   pub incomplete_search: Option<bool>,
-  pub files:             Vec<File>,
+  pub files:             Vec<FileMeta>,
 }
 
 // https://developers.google.com/drive/api/v3/reference/files#resource
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct File {
+pub struct FileMeta {
   pub kind:             Option<String>,
   pub id:               Option<String>,
   pub name:             Option<String>,
@@ -32,9 +32,9 @@ pub struct File {
   pub modified_time:    Option<DateTime<Local>>,
 }
 
-impl Default for File {
+impl Default for FileMeta {
   fn default() -> Self {
-    File {
+    Self {
       kind:             None,
       id:               None,
       name:             None,
@@ -50,7 +50,7 @@ impl Default for File {
   }
 }
 
-impl File {
+impl FileMeta {
   pub fn set_kind(mut self, kind: &str) -> Self {
     self.kind = Some(String::from(kind));
     self
@@ -258,7 +258,7 @@ pub async fn files_list(client: &Client, access_token: &str, params: FilesListQu
 pub async fn fetch_file(
   client: &Client,
   access_token: &str,
-  file: &File,
+  file: &FileMeta,
   parent: Option<&str>,
   filename: Option<&str>,
 ) {

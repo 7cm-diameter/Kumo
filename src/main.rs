@@ -48,7 +48,16 @@ async fn main() {
         };
         app.fetch_file(&x.files[n], None, None).await;
       }
-      "upload" => println!("Not implemented yet."),
+      "upload" => {
+        let meta = api::files::FileMeta::default()
+          .set_name("test.csv")
+          .set_mimetype("text/csv");
+        if let Some(path) = clargs.get(2) {
+          app.upload_file(path, Some(meta)).await;
+        } else {
+          println!("Path to file is not specified");
+        };
+      }
       _ => println!("Command {:} does not exist.", first_arg),
     }
   } else {

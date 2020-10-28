@@ -285,16 +285,13 @@ pub async fn fetch_file(
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
 }
 
-pub async fn upload_file(client: &Client, access_token: &str, file: &str, meta: Option<FileMeta>) {
-  let file = fs::read("./hoge.csv").unwrap();
+pub async fn upload_file(client: &Client, access_token: &str, path: &str, meta: Option<FileMeta>) {
+  let file = fs::read(path).unwrap();
   let response = client
     .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart")
     .bearer_auth(access_token)
     .header(reqwest::header::CONTENT_TYPE, "multipart/related")
-    .json(&json!({
-      "name": "hoge.csv",
-      "mimeType": "text/csv"
-    }))
+    .json(&meta.unwrap_or_else(|| FileMeta::default()))
     .body(file)
     .send()
     .await

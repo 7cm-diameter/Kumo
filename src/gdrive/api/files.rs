@@ -32,6 +32,61 @@ pub struct File {
   pub modified_time:    Option<DateTime<Local>>,
 }
 
+impl Default for File {
+  fn default() -> Self {
+    File {
+      kind:             None,
+      id:               None,
+      name:             None,
+      mime_type:        None,
+      description:      None,
+      trashed:          None,
+      parents:          None,
+      web_content_link: None,
+      web_view_link:    None,
+      created_time:     None,
+      modified_time:    None,
+    }
+  }
+}
+
+impl File {
+  pub fn set_kind(mut self, kind: &str) -> Self {
+    self.kind = Some(String::from(kind));
+    self
+  }
+
+  pub fn set_id(mut self, id: &str) -> Self {
+    self.id = Some(String::from(id));
+    self
+  }
+
+  pub fn set_name(mut self, name: &str) -> Self {
+    self.name = Some(String::from(name));
+    self
+  }
+
+  pub fn set_mimetype(mut self, mimetype: &str) -> Self {
+    self.mime_type = Some(String::from(mimetype));
+    self
+  }
+
+  pub fn set_description(mut self, description: &str) -> Self {
+    self.description = Some(String::from(description));
+    self
+  }
+
+  pub fn set_trashed(mut self, trashed: bool) -> Self {
+    self.trashed = Some(trashed);
+    self
+  }
+
+  pub fn set_parents(mut self, parents: &[&str]) -> Self {
+    self.parents = Some(parents.iter().map(|s| s.to_string()).collect());
+    self
+  }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilesListQuery {

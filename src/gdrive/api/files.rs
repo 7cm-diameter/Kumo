@@ -285,7 +285,7 @@ pub async fn fetch_file(
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
 }
 
-pub async fn upload_file(client: &Client, access_token: &str, file: &str, meta: Option<File>) {
+pub async fn upload_file(client: &Client, access_token: &str, file: &str, meta: Option<FileMeta>) {
   let file = fs::read("./hoge.csv").unwrap();
   let response = client
     .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart")

@@ -193,6 +193,23 @@ impl Default for FilesListQuery {
   }
 }
 
+pub enum UploadType {
+  Media,
+  Multipart,
+  Resumable,
+}
+
+impl ToString for UploadType {
+  fn to_string(&self) -> String {
+    let s = match self {
+      UploadType::Media => "media",
+      UploadType::Multipart => "multipart",
+      UploadType::Resumable => "resumable",
+    };
+    String::from(s)
+  }
+}
+
 impl FilesListQuery {
   pub fn set_drive_id(mut self, drive_id: &str) -> Self {
     self.drive_id = Some(String::from(drive_id));
@@ -282,4 +299,57 @@ pub async fn fetch_file(
   let mut f = fs::File::create(filename).unwrap();
 
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
+}
+
+async fn upload_resumable(client: &Client, access_token: &str, path: &str, meta: FileMeta) {
+  let response = client
+    .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable")
+    .bearer_auth(access_token)
+    .header(
+      reqwest::header::CONTENT_TYPE,
+      "application/json; charset=UTF-8",
+    )
+    .header(
+      reqwest::header::CONTENT_LENGTH,
+      serde_json::to_string(&meta).unwrap().len(),
+    )
+    .header(reqwest::header::X_CONTENT_TYPE_OPTIONS, "application/toml")
+    .json(&meta)
+    .send()
+    .await
+    .unwrap();
+
+  let s = format!("{:?}", &response);
+  let tokens: Vec<&str> = s.split_whitespace().collect();
+  // TODO: explore more clever ways to extract the index of "location".
+  if let Some(loc_idx) = tokens.iter().position(|t| t == &"\"location\":") {
+    // TODO: explore more clever ways to parse the token to uri
+    let resumable_uri = tokens
+      .get(loc_idx + 1)
+      .unwrap()
+      .replace("\"", "") // remove redundant charcter from uri
+      .replace(",", "");
+
+    let file = fs::read(path).unwrap();
+
+    client
+      .put(&resumable_uri)
+      .bearer_auth(access_token)
+      .header(reqwest::header::CONTENT_LENGTH, file.len())
+      .body(file)
+      .send()
+      .await
+      .unwrap();
+  }
+}
+
+pub async fn upload_file(client: &Client, access_token: &str, path: &str, upload_type: UploadType) {
+  let meta =
+    FileMeta::default().set_name(PathBuf::from(path).file_name().unwrap().to_str().unwrap());
+
+  match upload_type {
+    UploadType::Media => println!("Not implemented yet."),
+    UploadType::Multipart => println!("Not implemented yet."),
+    UploadType::Resumable => upload_resumable(client, access_token, path, meta).await,
+  }
 }

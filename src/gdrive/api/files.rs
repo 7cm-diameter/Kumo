@@ -426,8 +426,6 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, m
 }
 
 pub async fn upload_file(client: &Client, access_token: &str, path: &str, upload_type: UploadType) {
-  // let meta =
-  //   FileMeta::default().set_name(PathBuf::from(path).file_name().unwrap().to_str().unwrap());
   let mut meta = FileMeta::default();
   let path = PathBuf::from(path);
 

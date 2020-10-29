@@ -15,7 +15,7 @@ pub struct FileList {
 }
 
 // https://developers.google.com/drive/api/v3/reference/files#resource
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FileMeta {
   pub kind:             Option<String>,
@@ -50,39 +50,39 @@ impl Default for FileMeta {
 }
 
 impl FileMeta {
-  pub fn set_kind(mut self, kind: &str) -> Self {
+  pub fn set_kind(&mut self, kind: &str) -> Self {
     self.kind = Some(String::from(kind));
-    self
+    self.clone()
   }
 
-  pub fn set_id(mut self, id: &str) -> Self {
+  pub fn set_id(&mut self, id: &str) -> Self {
     self.id = Some(String::from(id));
-    self
+    self.clone()
   }
 
-  pub fn set_name(mut self, name: &str) -> Self {
+  pub fn set_name(&mut self, name: &str) -> Self {
     self.name = Some(String::from(name));
-    self
+    self.clone()
   }
 
-  pub fn set_mimetype(mut self, mimetype: &str) -> Self {
+  pub fn set_mimetype(&mut self, mimetype: &str) -> Self {
     self.mime_type = Some(String::from(mimetype));
-    self
+    self.clone()
   }
 
-  pub fn set_description(mut self, description: &str) -> Self {
+  pub fn set_description(&mut self, description: &str) -> Self {
     self.description = Some(String::from(description));
-    self
+    self.clone()
   }
 
-  pub fn set_trashed(mut self, trashed: bool) -> Self {
+  pub fn set_trashed(&mut self, trashed: bool) -> Self {
     self.trashed = Some(trashed);
-    self
+    self.clone()
   }
 
-  pub fn set_parents(mut self, parents: &[&str]) -> Self {
+  pub fn set_parents(&mut self, parents: &[&str]) -> Self {
     self.parents = Some(parents.iter().map(|s| s.to_string()).collect());
-    self
+    self.clone()
   }
 }
 
@@ -210,6 +210,98 @@ impl ToString for UploadType {
   }
 }
 
+enum MimeType {
+  BIN,
+  CSS,
+  CSV,
+  DOC,
+  GZ,
+  GIF,
+  HTML,
+  JPEG,
+  JSON,
+  MD,
+  MP3,
+  MP4,
+  MPEG,
+  PDF,
+  PLAIN,
+  PNG,
+  PPT,
+  PPTX,
+  TAR,
+  TOML,
+  TXT,
+  XLS,
+  XLSX,
+  YAML,
+  ZIP,
+}
+
+impl From<&str> for MimeType {
+  fn from(s: &str) -> Self {
+    match s {
+      "bin" => MimeType::BIN,
+      "css" => MimeType::CSS,
+      "csv" => MimeType::CSV,
+      "doc" => MimeType::DOC,
+      "gz" => MimeType::GZ,
+      "gif" => MimeType::GIF,
+      "html" => MimeType::HTML,
+      "jpeg" => MimeType::JPEG,
+      "json" => MimeType::JSON,
+      "md" => MimeType::MD,
+      "mp3" | "MP3" => MimeType::MP3,
+      "mp4" | "MP4" => MimeType::MP4,
+      "mpeg" => MimeType::MPEG,
+      "pdf" => MimeType::PDF,
+      "png" => MimeType::PNG,
+      "ppt" => MimeType::PPT,
+      "pptx" => MimeType::PPTX,
+      "tar" => MimeType::TAR,
+      "toml" | "tml" => MimeType::TOML,
+      "txt" => MimeType::TXT,
+      "xls" => MimeType::XLS,
+      "xlsx" => MimeType::XLSX,
+      "yaml" | "yml" => MimeType::YAML,
+      "zip" => MimeType::ZIP,
+      _ => MimeType::PLAIN,
+    }
+  }
+}
+
+impl Into<&str> for MimeType {
+  fn into(self) -> &'static str {
+    match self {
+      MimeType::BIN => "application/octet-stream",
+      MimeType::CSS => "text/csc",
+      MimeType::CSV => "text/csv",
+      MimeType::DOC => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      MimeType::GZ => "application/gzip",
+      MimeType::GIF => "image/gif",
+      MimeType::HTML => "text/html",
+      MimeType::JPEG => "image/jpeg",
+      MimeType::JSON => "application/json",
+      MimeType::MP3 => "audio/mpeg",
+      MimeType::MP4 => "video/mp4",
+      MimeType::MPEG => "video/mpeg",
+      MimeType::PDF => "application/pdf",
+      MimeType::PLAIN => "text/plain",
+      MimeType::PNG => "image/png",
+      MimeType::PPT => "application/vnd.ms-powerpoint",
+      MimeType::PPTX => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      MimeType::TAR => "applicaiton/x-tar",
+      MimeType::TOML => "application/toml",
+      MimeType::TXT => "text/plain",
+      MimeType::XLS => "application/vnd.ms-excel",
+      MimeType::XLSX => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      MimeType::YAML => "application/yaml",
+      MimeType::ZIP => "application/zip",
+      _ => "",
+    }
+  }
+}
+
 impl FilesListQuery {
   pub fn set_drive_id(mut self, drive_id: &str) -> Self {
     self.drive_id = Some(String::from(drive_id));
@@ -301,7 +393,7 @@ pub async fn fetch_file(
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
 }
 
-async fn upload_resumable(client: &Client, access_token: &str, path: &str, meta: FileMeta) {
+async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, meta: FileMeta) {
   let response = client
     .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable")
     .bearer_auth(access_token)
@@ -313,7 +405,6 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &str, meta:
       reqwest::header::CONTENT_LENGTH,
       serde_json::to_string(&meta).unwrap().len(),
     )
-    .header(reqwest::header::X_CONTENT_TYPE_OPTIONS, "application/toml")
     .json(&meta)
     .send()
     .await
@@ -344,12 +435,21 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &str, meta:
 }
 
 pub async fn upload_file(client: &Client, access_token: &str, path: &str, upload_type: UploadType) {
-  let meta =
-    FileMeta::default().set_name(PathBuf::from(path).file_name().unwrap().to_str().unwrap());
+  // let meta =
+  //   FileMeta::default().set_name(PathBuf::from(path).file_name().unwrap().to_str().unwrap());
+  let mut meta = FileMeta::default();
+  let path = PathBuf::from(path);
+
+  if let Some(filename) = path.file_name() {
+    meta.set_name(filename.to_str().unwrap());
+  };
+  if let Some(extension) = path.extension() {
+    meta.set_mimetype(MimeType::from(extension.to_str().unwrap()).into());
+  }
 
   match upload_type {
     UploadType::Media => println!("Not implemented yet."),
     UploadType::Multipart => println!("Not implemented yet."),
-    UploadType::Resumable => upload_resumable(client, access_token, path, meta).await,
+    UploadType::Resumable => upload_resumable(client, access_token, &path, meta).await,
   }
 }

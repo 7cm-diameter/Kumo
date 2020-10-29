@@ -410,27 +410,18 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, m
     .await
     .unwrap();
 
-  let s = format!("{:?}", &response);
-  let tokens: Vec<&str> = s.split_whitespace().collect();
-  // TODO: explore more clever ways to extract the index of "location".
-  if let Some(loc_idx) = tokens.iter().position(|t| t == &"\"location\":") {
-    // TODO: explore more clever ways to parse the token to uri
-    let resumable_uri = tokens
-      .get(loc_idx + 1)
-      .unwrap()
-      .replace("\"", "") // remove redundant charcter from uri
-      .replace(",", "");
-
-    let file = fs::read(path).unwrap();
-
-    client
-      .put(&resumable_uri)
-      .bearer_auth(access_token)
-      .header(reqwest::header::CONTENT_LENGTH, file.len())
-      .body(file)
-      .send()
-      .await
-      .unwrap();
+  if let Some(head_loc) = response.headers().get("location") {
+    if let Ok(resumable_uri) = head_loc.to_str() {
+      let file = fs::read(path).unwrap();
+      client
+        .put(resumable_uri)
+        .bearer_auth(access_token)
+        .header(reqwest::header::CONTENT_LENGTH, file.len())
+        .body(file)
+        .send()
+        .await
+        .unwrap();
+    }
   }
 }
 

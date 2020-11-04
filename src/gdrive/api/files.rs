@@ -425,6 +425,22 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, m
   }
 }
 
+async fn upload_media(client: &Client, access_token: &str, path: &PathBuf, meta: FileMeta) {
+  let file = fs::read(path).unwrap();
+  client
+    .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=media")
+    .bearer_auth(access_token)
+    .header(
+      reqwest::header::CONTENT_LENGTH,
+      meta.mime_type.unwrap_or_else(|| String::new()),
+    )
+    .header(reqwest::header::CONTENT_LENGTH, file.len())
+    .body(file)
+    .send()
+    .await
+    .unwrap();
+}
+
 pub async fn upload_file(client: &Client, access_token: &str, path: &str, upload_type: UploadType) {
   let mut meta = FileMeta::default();
   let path = PathBuf::from(path);
@@ -437,7 +453,7 @@ pub async fn upload_file(client: &Client, access_token: &str, path: &str, upload
   }
 
   match upload_type {
-    UploadType::Media => println!("Not implemented yet."),
+    UploadType::Media => upload_media(client, access_token, &path, meta).await,
     UploadType::Multipart => println!("Not implemented yet."),
     UploadType::Resumable => upload_resumable(client, access_token, &path, meta).await,
   }

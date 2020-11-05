@@ -29,6 +29,7 @@ pub struct FileMeta {
   pub web_view_link:    Option<String>,
   pub created_time:     Option<DateTime<Local>>,
   pub modified_time:    Option<DateTime<Local>>,
+  pub size:             Option<usize>,
 }
 
 impl Default for FileMeta {
@@ -45,6 +46,7 @@ impl Default for FileMeta {
       web_view_link:    None,
       created_time:     None,
       modified_time:    None,
+      size:             None,
     }
   }
 }
@@ -83,6 +85,52 @@ impl FileMeta {
   pub fn set_parents(&mut self, parents: &[&str]) -> Self {
     self.parents = Some(parents.iter().map(|s| s.to_string()).collect());
     self.clone()
+  }
+
+  // TODO: Add support for Japanese filename
+  pub fn show(&self, max_width: usize) -> String {
+    let mut s = String::new();
+    let head_separator = "| ";
+    let tail_separator = " |";
+    let name = if let Some(name) = &self.name {
+      if name.len() > max_width {
+        String::from(&name[0..max_width])
+      } else {
+        name.clone() + &" ".repeat(max_width - name.len())
+      }
+    } else {
+      String::from("Untitled")
+    };
+    s += head_separator;
+    s += &name;
+    s += tail_separator;
+    let datetime = if let Some(datetime) = &self.modified_time {
+      let datetime = datetime.to_string();
+      if datetime.len() > max_width {
+        String::from(&datetime[0..max_width])
+      } else {
+        datetime.clone() + &" ".repeat(max_width - datetime.len())
+      }
+    } else {
+      String::from("Unknown")
+    };
+    s += head_separator;
+    s += &datetime;
+    s += tail_separator;
+    let size = if let Some(size) = &self.size {
+      let size = size.to_string();
+      if size.len() > max_width {
+        String::from(&size[0..max_width])
+      } else {
+        size.clone() + &" ".repeat(max_width - size.len())
+      }
+    } else {
+      String::from("Unknown")
+    };
+    s += head_separator;
+    s += &size;
+    s += tail_separator;
+    s
   }
 }
 

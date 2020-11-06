@@ -87,17 +87,13 @@ impl FileMeta {
     self.clone()
   }
 
-  // TODO: Add support for Japanese filename
+  // TODO: Adjust name width
   pub fn show(&self, max_width: usize) -> String {
     let mut s = String::new();
     let head_separator = "| ";
     let tail_separator = " |";
     let name = if let Some(name) = &self.name {
-      if name.len() > max_width {
-        String::from(&name[0..max_width])
-      } else {
-        name.clone() + &" ".repeat(max_width - name.len())
-      }
+      name.chars().collect::<String>()
     } else {
       String::from("Untitled")
     };
@@ -114,7 +110,6 @@ impl FileMeta {
     } else {
       String::from("Unknown")
     };
-    s += head_separator;
     s += &datetime;
     s += tail_separator;
     let size = if let Some(size) = &self.size {
@@ -127,7 +122,6 @@ impl FileMeta {
     } else {
       String::from("Unknown")
     };
-    s += head_separator;
     s += &size;
     s += tail_separator;
     s

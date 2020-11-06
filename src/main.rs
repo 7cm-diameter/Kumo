@@ -30,7 +30,7 @@ async fn main() {
         x.files
           .iter()
           .enumerate()
-          .for_each(|(i, f)| println!("{:?}: {:?}", &i, &f.name));
+          .for_each(|(i, f)| println!("{:?}: {:?}", &i, &f.show(10),));
       }
       "fetch" => {
         let x = app

@@ -87,13 +87,19 @@ impl FileMeta {
     self.clone()
   }
 
-  // TODO: Adjust name width
+  // TODO: Need refactor
   pub fn show(&self, max_width: usize) -> String {
     let mut s = String::new();
     let head_separator = "| ";
-    let tail_separator = " |";
+    let tail_separator = " | ";
     let name = if let Some(name) = &self.name {
-      name.chars().collect::<String>()
+      let occ_space = count_occupied_space(name);
+      let name = if occ_space <= max_width {
+        name.to_string()
+      } else {
+        compress_str(name, max_width)
+      };
+      name.clone() + &" ".repeat(max_width - count_occupied_space(&name))
     } else {
       String::from("Untitled")
     };
@@ -126,6 +132,24 @@ impl FileMeta {
     s += tail_separator;
     s
   }
+}
+
+fn count_occupied_space(s: &str) -> usize {
+  let mut count = 0;
+  s.chars().for_each(|s| {
+    count += if s.to_string().len() > 1 { 2 } else { 1 };
+  });
+  count
+}
+
+fn compress_str(s: &str, len: usize) -> String {
+  let mut acc = 0;
+  s.chars()
+    .filter(|s| {
+      acc += if s.to_string().len() > 1 { 2 } else { 1 };
+      acc <= len
+    })
+    .collect::<String>()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

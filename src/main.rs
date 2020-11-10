@@ -30,7 +30,7 @@ async fn main() {
         x.files
           .iter()
           .enumerate()
-          .for_each(|(i, f)| println!("{:?}: {:?}", &i, &f.show(10),));
+          .for_each(|(i, f)| println!("{:?}: {:?}", &i, &f.show(20),));
       }
       "fetch" => {
         let x = app
@@ -59,7 +59,5 @@ async fn main() {
       }
       _ => println!("Command {:} does not exist.", first_arg),
     }
-  } else {
-    println!("No command will be executed.");
   }
 }

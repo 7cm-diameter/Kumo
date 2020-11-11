@@ -172,6 +172,75 @@ pub struct FilesListQuery {
   page_token:                    Option<String>,
 }
 
+impl Default for FilesListQuery {
+  fn default() -> Self {
+    Self {
+      drive_id:                      None,
+      include_items_form_all_drives: false,
+      fields:                        fields_to_query(&[
+        Field::Id,
+        Field::Name,
+        Field::MimeType,
+        Field::CreatedTime,
+        Field::ModifiedTime,
+        Field::Size,
+      ]),
+      q:                             None,
+      order_by:                      None,
+      page_size:                     100,
+      page_token:                    None,
+    }
+  }
+}
+
+impl FilesListQuery {
+  pub fn set_drive_id(mut self, drive_id: &str) -> Self {
+    self.drive_id = Some(String::from(drive_id));
+    self
+  }
+
+  pub fn set_fields(mut self, fields: &[Field]) -> Self {
+    self.fields = fields_to_query(fields);
+    self
+  }
+
+  pub fn add_fields(mut self, fields: &[Field]) -> Self {
+    let mut additional = fields
+      .iter()
+      .fold(String::from(","), |acc, s| acc + &s.to_string() + ",");
+    additional.pop(); // remove redundant `,` from the query.
+    self.fields.pop(); // remove right paren from the existed field query.
+    self.fields += &additional;
+    self.fields += ")";
+    self
+  }
+
+  pub fn include_items_form_all_drives(mut self, include: bool) -> Self {
+    self.include_items_form_all_drives = include;
+    self
+  }
+
+  pub fn set_q(mut self, q: &str) -> Self {
+    self.q = Some(String::from(q));
+    self
+  }
+
+  pub fn set_order(mut self, order: Order) -> Self {
+    self.order_by = Some(order.to_string());
+    self
+  }
+
+  pub fn set_page_size(mut self, size: u16) -> Self {
+    self.page_size = size;
+    self
+  }
+
+  pub fn set_page_token(mut self, token: &str) -> Self {
+    self.page_token = Some(String::from(token));
+    self
+  }
+}
+
 #[derive(Clone)]
 pub enum Field {
   Kind,
@@ -247,27 +316,6 @@ impl ToString for Order {
       Order::ViewedByMeTime => "viewedTimeByMe",
     };
     String::from(s)
-  }
-}
-
-impl Default for FilesListQuery {
-  fn default() -> Self {
-    Self {
-      drive_id:                      None,
-      include_items_form_all_drives: false,
-      fields:                        fields_to_query(&[
-        Field::Id,
-        Field::Name,
-        Field::MimeType,
-        Field::CreatedTime,
-        Field::ModifiedTime,
-        Field::Size,
-      ]),
-      q:                             None,
-      order_by:                      None,
-      page_size:                     100,
-      page_token:                    None,
-    }
   }
 }
 
@@ -377,54 +425,6 @@ impl Into<&str> for MimeType {
       MimeType::ZIP => "application/zip",
       _ => "",
     }
-  }
-}
-
-impl FilesListQuery {
-  pub fn set_drive_id(mut self, drive_id: &str) -> Self {
-    self.drive_id = Some(String::from(drive_id));
-    self
-  }
-
-  pub fn set_fields(mut self, fields: &[Field]) -> Self {
-    self.fields = fields_to_query(fields);
-    self
-  }
-
-  pub fn add_fields(mut self, fields: &[Field]) -> Self {
-    let mut additional = fields
-      .iter()
-      .fold(String::from(","), |acc, s| acc + &s.to_string() + ",");
-    additional.pop(); // remove redundant `,` from the query.
-    self.fields.pop(); // remove right paren from the existed field query.
-    self.fields += &additional;
-    self.fields += ")";
-    self
-  }
-
-  pub fn include_items_form_all_drives(mut self, include: bool) -> Self {
-    self.include_items_form_all_drives = include;
-    self
-  }
-
-  pub fn set_q(mut self, q: &str) -> Self {
-    self.q = Some(String::from(q));
-    self
-  }
-
-  pub fn set_order(mut self, order: Order) -> Self {
-    self.order_by = Some(order.to_string());
-    self
-  }
-
-  pub fn set_page_size(mut self, size: u16) -> Self {
-    self.page_size = size;
-    self
-  }
-
-  pub fn set_page_token(mut self, token: &str) -> Self {
-    self.page_token = Some(String::from(token));
-    self
   }
 }
 

@@ -29,7 +29,7 @@ pub struct FileMeta {
   pub web_view_link:    Option<String>,
   pub created_time:     Option<DateTime<Local>>,
   pub modified_time:    Option<DateTime<Local>>,
-  pub size:             Option<usize>,
+  pub size:             Option<String>,
 }
 
 impl Default for FileMeta {
@@ -92,42 +92,45 @@ impl FileMeta {
     let mut s = String::new();
     let head_separator = "| ";
     let tail_separator = " | ";
-    let name = if let Some(name) = &self.name {
+    let mut name = if let Some(name) = &self.name {
       let occ_space = count_occupied_space(name);
-      let name = if occ_space <= max_width {
+      if occ_space <= max_width {
         name.to_string()
       } else {
         compress_str(name, max_width)
-      };
-      name.clone() + &" ".repeat(max_width - count_occupied_space(&name))
+      }
     } else {
       String::from("Untitled")
     };
+    name += &" ".repeat(max_width - count_occupied_space(&name));
     s += head_separator;
     s += &name;
     s += tail_separator;
-    let datetime = if let Some(datetime) = &self.modified_time {
+    let mut datetime = if let Some(datetime) = &self.modified_time {
       let datetime = datetime.to_string();
-      if datetime.len() > max_width {
-        String::from(&datetime[0..max_width])
+      let occ_space = count_occupied_space(&datetime);
+      if occ_space <= max_width {
+        datetime.to_string()
       } else {
-        datetime.clone() + &" ".repeat(max_width - datetime.len())
+        compress_str(&datetime, max_width)
       }
     } else {
       String::from("Unknown")
     };
+    datetime += &" ".repeat(max_width - count_occupied_space(&datetime));
     s += &datetime;
     s += tail_separator;
-    let size = if let Some(size) = &self.size {
-      let size = size.to_string();
-      if size.len() > max_width {
-        String::from(&size[0..max_width])
+    let mut size = if let Some(size) = &self.size {
+      let occ_space = count_occupied_space(&size);
+      if occ_space <= max_width {
+        size.to_string()
       } else {
-        size.clone() + &" ".repeat(max_width - size.len())
+        compress_str(&size, max_width)
       }
     } else {
       String::from("Unknown")
     };
+    size += &" ".repeat(max_width - count_occupied_space(&size));
     s += &size;
     s += tail_separator;
     s
@@ -177,6 +180,7 @@ pub enum Field {
   WebViewLink,
   CreatedTime,
   ModifiedTime,
+  Size,
 }
 
 impl ToString for Field {
@@ -193,6 +197,7 @@ impl ToString for Field {
       Field::WebViewLink => "webViewLink",
       Field::CreatedTime => "createdTime",
       Field::ModifiedTime => "modifiedTime",
+      Field::Size => "size",
     };
     String::from(s)
   }
@@ -239,6 +244,7 @@ impl ToString for Order {
     String::from(s)
   }
 }
+
 impl Default for FilesListQuery {
   fn default() -> Self {
     Self {
@@ -250,6 +256,7 @@ impl Default for FilesListQuery {
         Field::MimeType,
         Field::CreatedTime,
         Field::ModifiedTime,
+        Field::Size,
       ]),
       q:                             None,
       order_by:                      None,

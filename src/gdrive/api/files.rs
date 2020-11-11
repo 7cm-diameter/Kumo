@@ -87,6 +87,11 @@ impl FileMeta {
     self.clone()
   }
 
+  pub fn set_size(&mut self, size: usize) -> Self {
+    self.size = Some(size.to_string());
+    self.clone()
+  }
+
   // TODO: Need refactor
   pub fn show(&self, max_width: usize) -> String {
     let mut s = String::new();

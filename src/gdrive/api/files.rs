@@ -1,6 +1,7 @@
 use reqwest::Client;
 use std::{fs, io, path::PathBuf};
 
+use crate::util;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
@@ -98,66 +99,48 @@ impl FileMeta {
     let head_separator = "| ";
     let tail_separator = " | ";
     let mut name = if let Some(name) = &self.name {
-      let occ_space = count_occupied_space(name);
+      let occ_space = util::cell_length(&name);
       if occ_space <= max_width {
         name.to_string()
       } else {
-        compress_str(name, max_width)
+        util::head_str(name, max_width)
       }
     } else {
       String::from("Untitled")
     };
-    name += &" ".repeat(max_width - count_occupied_space(&name));
+    name += &" ".repeat(max_width - util::cell_length(&name));
     s += head_separator;
     s += &name;
     s += tail_separator;
     let mut datetime = if let Some(datetime) = &self.modified_time {
       let datetime = datetime.to_string();
-      let occ_space = count_occupied_space(&datetime);
+      let occ_space = util::cell_length(&datetime);
       if occ_space <= max_width {
         datetime.to_string()
       } else {
-        compress_str(&datetime, max_width)
+        util::head_str(&datetime, max_width)
       }
     } else {
       String::from("Unknown")
     };
-    datetime += &" ".repeat(max_width - count_occupied_space(&datetime));
+    datetime += &" ".repeat(max_width - util::cell_length(&datetime));
     s += &datetime;
     s += tail_separator;
     let mut size = if let Some(size) = &self.size {
-      let occ_space = count_occupied_space(&size);
+      let occ_space = util::cell_length(&size);
       if occ_space <= max_width {
         size.to_string()
       } else {
-        compress_str(&size, max_width)
+        util::head_str(&size, max_width)
       }
     } else {
       String::from("Unknown")
     };
-    size += &" ".repeat(max_width - count_occupied_space(&size));
+    size += &" ".repeat(max_width - util::cell_length(&size));
     s += &size;
     s += tail_separator;
     s
   }
-}
-
-fn count_occupied_space(s: &str) -> usize {
-  let mut count = 0;
-  s.chars().for_each(|s| {
-    count += if s.to_string().len() > 1 { 2 } else { 1 };
-  });
-  count
-}
-
-fn compress_str(s: &str, len: usize) -> String {
-  let mut acc = 0;
-  s.chars()
-    .filter(|s| {
-      acc += if s.to_string().len() > 1 { 2 } else { 1 };
-      acc <= len
-    })
-    .collect::<String>()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

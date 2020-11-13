@@ -129,15 +129,15 @@ impl FileMeta {
     let mut size = if let Some(size) = &self.size {
       let size = util::size_of(size.parse::<usize>().unwrap(), util::SizeUnit::B);
       let occ_space = util::cell_length(&size);
-      if occ_space <= max_width {
+      if occ_space <= 8 {
         size.to_string()
       } else {
-        util::head_str(&size, max_width)
+        util::head_str(&size, 8)
       }
     } else {
       String::from("Unknown")
     };
-    size += &" ".repeat(max_width - util::cell_length(&size));
+    size += &" ".repeat(8 - util::cell_length(&size));
     s += &size;
     s += tail_separator;
     s

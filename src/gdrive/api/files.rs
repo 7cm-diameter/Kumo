@@ -127,6 +127,7 @@ impl FileMeta {
     s += &datetime;
     s += tail_separator;
     let mut size = if let Some(size) = &self.size {
+      let size = util::size_of(size.parse::<usize>().unwrap(), util::SizeUnit::B);
       let occ_space = util::cell_length(&size);
       if occ_space <= max_width {
         size.to_string()

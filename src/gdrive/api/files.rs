@@ -356,6 +356,7 @@ impl From<&str> for MimeType {
       "css" => MimeType::CSS,
       "csv" => MimeType::CSV,
       "doc" => MimeType::DOC,
+      "folder" => MimeType::FOLDER,
       "gz" => MimeType::GZ,
       "gif" => MimeType::GIF,
       "html" => MimeType::HTML,

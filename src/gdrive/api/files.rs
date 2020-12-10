@@ -506,20 +506,27 @@ async fn upload_media(client: &Client, access_token: &str, path: &PathBuf, meta:
     .unwrap();
 }
 
-pub async fn upload_file(client: &Client, access_token: &str, path: &str, upload_type: UploadType) {
-  let mut meta = FileMeta::default();
-  let path = PathBuf::from(path);
+pub async fn upload_file(
+  client: &Client,
+  access_token: &str,
+  paths: &[&str],
+  upload_type: UploadType,
+) {
+  for p in paths {
+    let mut meta = FileMeta::default();
+    let path = PathBuf::from(p);
 
-  if let Some(filename) = path.file_name() {
-    meta.set_name(filename.to_str().unwrap());
-  };
-  if let Some(extension) = path.extension() {
-    meta.set_mimetype(MimeType::from(extension.to_str().unwrap()).into());
-  }
+    if let Some(filename) = path.file_name() {
+      meta.set_name(filename.to_str().unwrap());
+    };
+    if let Some(extension) = path.extension() {
+      meta.set_mimetype(MimeType::from(extension.to_str().unwrap()).into());
+    }
 
-  match upload_type {
-    UploadType::Media => upload_media(client, access_token, &path, meta).await,
-    UploadType::Multipart => println!("Not implemented yet."),
-    UploadType::Resumable => upload_resumable(client, access_token, &path, meta).await,
+    match upload_type {
+      UploadType::Media => upload_media(client, access_token, &path, meta).await,
+      UploadType::Multipart => println!("Not implemented yet."),
+      UploadType::Resumable => upload_resumable(client, access_token, &path, meta).await,
+    }
   }
 }

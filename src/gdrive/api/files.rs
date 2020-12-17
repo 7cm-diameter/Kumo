@@ -459,6 +459,8 @@ pub async fn fetch_file(
 }
 
 async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, meta: FileMeta) {
+  let mut meta = meta;
+  meta.set_parents(&["1mwNHF9EuFTY8Fo33v_JxxIaKix6rRwAt"]);
   let response = client
     .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable")
     .bearer_auth(access_token)
@@ -511,9 +513,13 @@ pub async fn upload_file(
   access_token: &str,
   paths: &[&str],
   upload_type: UploadType,
+  parent: Option<&String>,
 ) {
   for p in paths {
     let mut meta = FileMeta::default();
+    if let Some(parent) = &parent {
+      meta.set_parents(&[&parent]);
+    }
     let path = PathBuf::from(p);
 
     if let Some(filename) = path.file_name() {

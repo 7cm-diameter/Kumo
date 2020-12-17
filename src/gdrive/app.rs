@@ -64,7 +64,19 @@ impl GoogleDriveClient {
     api::drives::drives_list(&self.client, self.access_token(), params).await
   }
 
-  pub async fn upload_file(&self, paths: &[&str], upload_type: api::files::UploadType) {
-    api::files::upload_file(&self.client, self.access_token(), paths, upload_type).await;
+  pub async fn upload_file(
+    &self,
+    paths: &[&str],
+    upload_type: api::files::UploadType,
+    parent: Option<&String>,
+  ) {
+    api::files::upload_file(
+      &self.client,
+      self.access_token(),
+      paths,
+      upload_type,
+      parent,
+    )
+    .await;
   }
 }

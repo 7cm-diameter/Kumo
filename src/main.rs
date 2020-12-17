@@ -50,8 +50,13 @@ async fn main() {
       }
       "upload" => {
         if let Some(path) = clargs.get(2) {
+          let parent = clargs.get(3);
           app
-            .upload_file(&[path], api::files::UploadType::Resumable)
+            .upload_file(
+              &[path],
+              api::files::UploadType::Resumable,
+              parent.to_owned(),
+            )
             .await;
         } else {
           println!("Path to file is not specified");

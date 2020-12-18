@@ -29,12 +29,17 @@ async fn main() {
         .default_value("./tokencache.json"),
     )
     .subcommands(vec![
-      SubCommand::with_name("ls").arg(
+      SubCommand::with_name("ls").args(&[
         Arg::with_name("query")
           .short("q")
           .long("auery")
           .takes_value(true),
-      ),
+        Arg::with_name("page-size")
+          .short("s")
+          .long("max-size")
+          .takes_value(true)
+          .default_value("100"),
+      ]),
       SubCommand::with_name("fetch").args(&[
         Arg::with_name("filename")
           .takes_value(true)
@@ -66,7 +71,14 @@ async fn main() {
 
   if let Some(matches) = args.subcommand_matches("ls") {
     let q = matches.value_of("query");
-    let fq = api::files::FilesListQuery::default().set_q(q);
+    let max_size = matches
+      .value_of("page-size")
+      .unwrap()
+      .parse::<u16>()
+      .unwrap();
+    let fq = api::files::FilesListQuery::default()
+      .set_q(q)
+      .set_page_size(max_size);
     let list = app.files_list(fq).await;
     list
       .files

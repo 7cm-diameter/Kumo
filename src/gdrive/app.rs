@@ -54,10 +54,17 @@ impl GoogleDriveClient {
   pub async fn fetch_file(
     &self,
     file: &api::files::FileMeta,
-    parent: Option<&str>,
+    destination: Option<&str>,
     filename: Option<&str>,
   ) {
-    api::files::fetch_file(&self.client, self.access_token(), file, parent, filename).await;
+    api::files::fetch_file(
+      &self.client,
+      self.access_token(),
+      file,
+      destination,
+      filename,
+    )
+    .await;
   }
 
   pub async fn drives_list(&self, params: api::drives::DrivesListQuery) -> api::drives::DriveList {
@@ -68,14 +75,14 @@ impl GoogleDriveClient {
     &self,
     paths: &[&str],
     upload_type: api::files::UploadType,
-    parent: Option<&str>,
+    destination: Option<&str>,
   ) {
     api::files::upload_file(
       &self.client,
       self.access_token(),
       paths,
       upload_type,
-      parent,
+      destination,
     )
     .await;
   }

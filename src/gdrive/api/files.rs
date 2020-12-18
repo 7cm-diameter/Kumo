@@ -434,7 +434,7 @@ pub async fn fetch_file(
   client: &Client,
   access_token: &str,
   file: &FileMeta,
-  parent: Option<&str>,
+  destination: Option<&str>,
   filename: Option<&str>,
 ) {
   let response = client
@@ -449,7 +449,7 @@ pub async fn fetch_file(
 
   let filename = filename.unwrap_or_else(|| file.name.as_ref().unwrap());
 
-  let filename = if let Some(path) = parent {
+  let filename = if let Some(path) = destination {
     PathBuf::from(path).join(filename)
   } else {
     PathBuf::from(filename)
@@ -513,11 +513,11 @@ pub async fn upload_file(
   access_token: &str,
   paths: &[&str],
   upload_type: UploadType,
-  parent: Option<&str>,
+  destination: Option<&str>,
 ) {
   for p in paths {
     let mut meta = FileMeta::default();
-    if let Some(parent) = &parent {
+    if let Some(parent) = &destination {
       meta.set_parents(&[&parent]);
     }
     let path = PathBuf::from(p);

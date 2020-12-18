@@ -43,9 +43,9 @@ async fn main() {
         Arg::with_name("destination").takes_value(true).index(2),
       ]),
       SubCommand::with_name("upload").args(&[
-        Arg::with_name("files")
-          .short("f")
-          .long("files")
+        Arg::with_name("paths")
+          .short("p")
+          .long("paths")
           .takes_value(true)
           .required(true)
           .multiple(true)
@@ -86,10 +86,10 @@ async fn main() {
   }
 
   if let Some(matches) = args.subcommand_matches("upload") {
-    let files: Vec<&str> = matches.values_of("files").unwrap().collect();
+    let paths: Vec<&str> = matches.values_of("paths").unwrap().collect();
     let destination = matches.value_of("destination");
     app
-      .upload_file(&files, api::files::UploadType::Resumable, destination)
+      .upload_file(&paths, api::files::UploadType::Resumable, destination)
       .await;
   }
 }

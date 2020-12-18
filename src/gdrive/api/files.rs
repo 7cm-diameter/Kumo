@@ -204,8 +204,10 @@ impl FilesListQuery {
     self
   }
 
-  pub fn set_q(mut self, q: &str) -> Self {
-    self.q = Some(String::from(q));
+  pub fn set_q(mut self, q: Option<&str>) -> Self {
+    if let Some(q) = q {
+      self.q = Some(q.to_string());
+    };
     self
   }
 
@@ -459,8 +461,6 @@ pub async fn fetch_file(
 }
 
 async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, meta: FileMeta) {
-  let mut meta = meta;
-  meta.set_parents(&["1mwNHF9EuFTY8Fo33v_JxxIaKix6rRwAt"]);
   let response = client
     .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable")
     .bearer_auth(access_token)
@@ -513,7 +513,7 @@ pub async fn upload_file(
   access_token: &str,
   paths: &[&str],
   upload_type: UploadType,
-  parent: Option<&String>,
+  parent: Option<&str>,
 ) {
   for p in paths {
     let mut meta = FileMeta::default();

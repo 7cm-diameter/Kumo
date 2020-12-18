@@ -68,7 +68,7 @@ impl GoogleDriveClient {
     &self,
     paths: &[&str],
     upload_type: api::files::UploadType,
-    parent: Option<&String>,
+    parent: Option<&str>,
   ) {
     api::files::upload_file(
       &self.client,

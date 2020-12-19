@@ -206,8 +206,17 @@ impl FilesListQuery {
 
   pub fn set_q(mut self, q: Option<&str>) -> Self {
     if let Some(q) = q {
+      if let Some(base) = self.q {
+        self.q = Some(base + &format!(" and {}", q));
+        return self;
+      }
       self.q = Some(q.to_string());
     };
+    self
+  }
+
+  pub fn include_trash(mut self, trashed: bool) -> Self {
+    if trashed { self.q = None };
     self
   }
 

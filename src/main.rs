@@ -32,13 +32,16 @@ async fn main() {
       SubCommand::with_name("ls").args(&[
         Arg::with_name("query")
           .short("q")
-          .long("auery")
+          .long("query")
           .takes_value(true),
         Arg::with_name("page-size")
           .short("s")
           .long("max-size")
           .takes_value(true)
           .default_value("100"),
+        Arg::with_name("include-trash")
+          .short("t")
+          .long("include-trash")
       ]),
       SubCommand::with_name("fetch").args(&[
         Arg::with_name("filename")
@@ -76,7 +79,9 @@ async fn main() {
       .unwrap()
       .parse::<u16>()
       .unwrap();
+    let trashed = matches.is_present("include-trash");
     let fq = api::files::FilesListQuery::default()
+      .include_trash(trashed)
       .set_q(q)
       .set_page_size(max_size);
     let list = app.files_list(fq).await;

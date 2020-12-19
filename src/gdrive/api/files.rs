@@ -169,7 +169,7 @@ impl Default for FilesListQuery {
         Field::ModifiedTime,
         Field::Size,
       ]),
-      q:                             None,
+      q:                             Some(String::from("trashed = false")),
       order_by:                      None,
       page_size:                     100,
       page_token:                    None,

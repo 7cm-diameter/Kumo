@@ -1,3 +1,34 @@
+use chrono::{DateTime, Datelike, Timelike, TimeZone};
+
+pub fn format_datetime<T: TimeZone>(datetime: &DateTime<T>) -> String {
+  let date = datetime.date();
+  let year = date.year().to_string().get(2..).unwrap().to_string();
+  let month = if date.month() >= 10 {
+    date.month().to_string()
+  } else {
+    format!("0{}", date.month())
+  };
+  let day = if date.day() >= 10 {
+    date.day().to_string()
+  } else {
+    format!("0{}", date.day())
+  };
+
+  let time = datetime.time();
+  let hour = if time.hour() >= 10 {
+    time.hour().to_string()
+  } else {
+    format!("0{}", time.hour())
+  };
+  let minute = if time.minute() >= 10 {
+    time.minute().to_string()
+  } else {
+    format!("0{}", time.minute())
+  };
+
+  format!("{} {} {} {}:{}", year, month, day, hour, minute)
+}
+
 fn count_occupied_cell(c: &char) -> usize {
   if c.to_string().len() > 1 {
     2
@@ -8,16 +39,6 @@ fn count_occupied_cell(c: &char) -> usize {
 
 pub fn cell_length(s: &str) -> usize {
   s.chars().fold(0, |acc, c| acc + count_occupied_cell(&c))
-}
-
-pub fn head_str(s: &str, ncell: usize) -> String {
-  let mut acc = 0;
-  s.chars()
-    .filter(|c| {
-      acc += count_occupied_cell(c);
-      acc <= ncell
-    })
-    .collect()
 }
 
 pub enum SizeUnit {

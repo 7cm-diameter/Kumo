@@ -5,6 +5,9 @@ use crate::util;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
+const DATEFORMATLENGHT: usize = 14;
+const DATASIZELENGHT: usize = 5;
+
 // https://developers.google.com/drive/api/v3/reference/files/list
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -93,53 +96,31 @@ impl FileMeta {
     self.clone()
   }
 
-  // TODO: Need refactor
-  pub fn show(&self, max_width: usize) -> String {
+  pub fn show(&self, long: bool) -> String {
     let mut s = String::new();
-    let head_separator = "| ";
-    let tail_separator = " | ";
-    let mut name = if let Some(name) = &self.name {
-      let occ_space = util::cell_length(&name);
-      if occ_space <= max_width {
-        name.to_string()
+    s += &if long {
+      let datetime = if let Some(modtime) = &self.modified_time {
+        util::format_datetime(modtime)
       } else {
-        util::head_str(name, max_width)
-      }
+        " ".repeat(DATEFORMATLENGHT) // because util::format_datetime returns 14 charcters
+      };
+      let size = if let Some(size) = &self.size {
+        let size = util::size_of(size.parse::<usize>().unwrap(), util::SizeUnit::B);
+        let occ_space = util::cell_length(&size);
+        if occ_space >= DATASIZELENGHT {
+          size
+        } else {
+          " ".repeat(DATASIZELENGHT - occ_space) + &size
+        }
+      } else {
+        " ".repeat(DATASIZELENGHT)
+      };
+      format!("{} {} ", size, datetime)
     } else {
-      String::from("Untitled")
+      String::new()
     };
-    name += &" ".repeat(max_width - util::cell_length(&name));
-    s += head_separator;
+    let name = self.name.clone().unwrap_or_else(|| String::from("Untitled"));
     s += &name;
-    s += tail_separator;
-    let mut datetime = if let Some(datetime) = &self.modified_time {
-      let datetime = datetime.to_string();
-      let occ_space = util::cell_length(&datetime);
-      if occ_space <= max_width {
-        datetime.to_string()
-      } else {
-        util::head_str(&datetime, max_width)
-      }
-    } else {
-      String::from("Unknown")
-    };
-    datetime += &" ".repeat(max_width - util::cell_length(&datetime));
-    s += &datetime;
-    s += tail_separator;
-    let mut size = if let Some(size) = &self.size {
-      let size = util::size_of(size.parse::<usize>().unwrap(), util::SizeUnit::B);
-      let occ_space = util::cell_length(&size);
-      if occ_space <= 8 {
-        size.to_string()
-      } else {
-        util::head_str(&size, 8)
-      }
-    } else {
-      String::from("Unknown")
-    };
-    size += &" ".repeat(8 - util::cell_length(&size));
-    s += &size;
-    s += tail_separator;
     s
   }
 }

@@ -88,8 +88,7 @@ async fn main() {
     list
       .files
       .iter()
-      .enumerate()
-      .for_each(|(i, f)| println!("{:?}: {:?}", &i, &f.show(20),));
+      .for_each(|f| println!("{}", &f.show(false)));
   }
 
   if let Some(matches) = args.subcommand_matches("fetch") {

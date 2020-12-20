@@ -92,7 +92,7 @@ async fn main() {
     list
       .files
       .iter()
-      .for_each(|f| println!("{}", &f.show(show_long)));;;
+      .for_each(|f| println!("{}", &f.show(show_long)));
   }
 
   if let Some(matches) = args.subcommand_matches("fetch") {

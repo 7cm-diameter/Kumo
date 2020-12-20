@@ -41,7 +41,10 @@ async fn main() {
           .default_value("100"),
         Arg::with_name("include-trash")
           .short("t")
-          .long("include-trash")
+          .long("include-trash"),
+        Arg::with_name("long")
+          .short("l")
+          .long("long")
       ]),
       SubCommand::with_name("fetch").args(&[
         Arg::with_name("filename")
@@ -80,6 +83,7 @@ async fn main() {
       .parse::<u16>()
       .unwrap();
     let trashed = matches.is_present("include-trash");
+    let show_long = matches.is_present("long");
     let fq = api::files::FilesListQuery::default()
       .include_trash(trashed)
       .set_q(q)
@@ -88,7 +92,7 @@ async fn main() {
     list
       .files
       .iter()
-      .for_each(|f| println!("{}", &f.show(false)));
+      .for_each(|f| println!("{}", &f.show(show_long)));;;
   }
 
   if let Some(matches) = args.subcommand_matches("fetch") {

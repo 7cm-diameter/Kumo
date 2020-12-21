@@ -128,7 +128,7 @@ impl FileMeta {
   }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FilesListQuery {
   drive_id:                      Option<String>,
@@ -162,17 +162,17 @@ impl Default for FilesListQuery {
 }
 
 impl FilesListQuery {
-  pub fn set_drive_id(mut self, drive_id: &str) -> Self {
+  pub fn set_drive_id(&mut self, drive_id: &str) -> Self {
     self.drive_id = Some(String::from(drive_id));
-    self
+    self.clone()
   }
 
-  pub fn set_fields(mut self, fields: &[Field]) -> Self {
+  pub fn set_fields(&mut self, fields: &[Field]) -> Self {
     self.fields = fields_to_query(fields);
-    self
+    self.clone()
   }
 
-  pub fn add_fields(mut self, fields: &[Field]) -> Self {
+  pub fn add_fields(&mut self, fields: &[Field]) -> Self {
     let mut additional = fields
       .iter()
       .fold(String::from(","), |acc, s| acc + &s.to_string() + ",");
@@ -180,44 +180,41 @@ impl FilesListQuery {
     self.fields.pop(); // remove right paren from the existed field query.
     self.fields += &additional;
     self.fields += ")";
-    self
+    self.clone()
   }
 
-  pub fn include_items_form_all_drives(mut self, include: bool) -> Self {
+  pub fn include_items_form_all_drives(&mut self, include: bool) -> Self {
     self.include_items_form_all_drives = include;
-    self
+    self.clone()
   }
 
-  pub fn add_q(mut self, q: Option<&str>) -> Self {
+  pub fn add_q(&mut self, q: Option<&str>) -> Self {
     if let Some(q) = q {
-      if let Some(base) = self.q {
-        self.q = Some(base + &format!(" and {}", q));
-        return self;
+      if let Some(base) = &self.q {
+        self.q = Some(base.to_string() + &format!(" and {}", q));
+        return self.clone();
       }
       self.q = Some(q.to_string());
     };
-    self
+    self.clone()
   }
 
-  pub fn only_trashed(mut self, trashed: bool) -> Self {
-    if trashed {
-      self = self.add_q(Some(&format!("trashed = true")));
+  pub fn only_trashed(&mut self, trashed: bool) -> Self {
+    let q = if trashed { "trashed = true" } else { "trashed = false" };
+    self.add_q(Some(q));
+    self.clone()
+  }
+
+  pub fn only_shared(&mut self, shared: bool) -> Self {
+    if !shared { return self.clone() };
+    let q = if let Some(q) = &self.q {
+      q.replace("'root' in parents", "sharedWithMe")
     } else {
-      self = self.add_q(Some(&format!("trashed = false")));
+      String::from("sharedWithMe")
     };
-    self
-  }
-
-  pub fn only_shared(mut self, shared: bool) -> Self {
-    if shared {
-      if let Some(q) = self.q {
-        // when "'root' in parents" in a query, no file or folder is returned even if "sharedWithMe" is in the query.
-        self.q = Some(q.replace("'root' in parents", "sharedWithMe"));
-      } else {
-        self.q = Some(String::from("sharedWithMe"));
-      }
-    }
-    self
+    println!("{}", &q);
+    self.q = Some(q);
+    self.clone()
   }
 
   pub fn set_order(mut self, order: Order) -> Self {

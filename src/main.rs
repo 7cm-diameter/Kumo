@@ -77,22 +77,26 @@ async fn main() {
 
   if let Some(matches) = args.subcommand_matches("ls") {
     let folder = matches.value_of("folder").unwrap_or_else(|| "root");
+    let q = matches.value_of("query");
+
     let only_trashed = matches.is_present("only-trashed");
     let only_shared = matches.is_present("only-shared");
-    let q = matches.value_of("query");
     let max_size = matches
       .value_of("page-size")
       .unwrap()
       .parse::<u16>()
       .unwrap();
     let show_long = matches.is_present("long");
+
     let fq = api::files::FilesListQuery::default()
       .add_q(Some(&format!("'{}' in parents", folder)))
       .only_trashed(only_trashed)
       .only_shared(only_shared)
       .add_q(q)
       .set_page_size(max_size);
+
     let list = app.files_list(fq).await;
+
     list
       .files
       .iter()

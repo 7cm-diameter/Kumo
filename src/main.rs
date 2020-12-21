@@ -36,13 +36,14 @@ async fn main() {
           .long("query")
           .takes_value(true),
         Arg::with_name("page-size")
-          .short("s")
+          .short("S")
           .long("max-size")
           .takes_value(true)
           .default_value("100"),
         Arg::with_name("only-trashed")
           .short("t")
           .long("only-trashed"),
+        Arg::with_name("only-shared").short("s").long("only-shared"),
         Arg::with_name("long").short("l").long("long"),
       ]),
       SubCommand::with_name("fetch").args(&[
@@ -77,6 +78,7 @@ async fn main() {
   if let Some(matches) = args.subcommand_matches("ls") {
     let folder = matches.value_of("folder").unwrap_or_else(|| "root");
     let only_trashed = matches.is_present("only-trashed");
+    let only_shared = matches.is_present("only-shared");
     let q = matches.value_of("query");
     let max_size = matches
       .value_of("page-size")
@@ -87,6 +89,7 @@ async fn main() {
     let fq = api::files::FilesListQuery::default()
       .add_q(Some(&format!("'{}' in parents", folder)))
       .only_trashed(only_trashed)
+      .only_shared(only_shared)
       .add_q(q)
       .set_page_size(max_size);
     let list = app.files_list(fq).await;

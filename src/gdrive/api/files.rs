@@ -208,6 +208,17 @@ impl FilesListQuery {
     self
   }
 
+  pub fn only_shared(mut self, shared: bool) -> Self {
+    if shared {
+      if let Some(q) = self.q {
+        self.q = Some(q.replace("'root' in parents", "sharedWithMe"));
+      } else {
+        self.q = Some(String::from("sharedWithMe"));
+      }
+    }
+    self
+  }
+
   pub fn set_order(mut self, order: Order) -> Self {
     self.order_by = Some(order.to_string());
     self

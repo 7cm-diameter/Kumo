@@ -153,7 +153,7 @@ impl Default for FilesListQuery {
         Field::ModifiedTime,
         Field::Size,
       ]),
-      q:                             Some(String::from("trashed = false")),
+      q:                             None,
       order_by:                      None,
       page_size:                     100,
       page_token:                    None,
@@ -188,7 +188,7 @@ impl FilesListQuery {
     self
   }
 
-  pub fn set_q(mut self, q: Option<&str>) -> Self {
+  pub fn add_q(mut self, q: Option<&str>) -> Self {
     if let Some(q) = q {
       if let Some(base) = self.q {
         self.q = Some(base + &format!(" and {}", q));
@@ -199,9 +199,11 @@ impl FilesListQuery {
     self
   }
 
-  pub fn include_trash(mut self, trashed: bool) -> Self {
+  pub fn only_trashed(mut self, trashed: bool) -> Self {
     if trashed {
-      self.q = None
+      self = self.add_q(Some(&format!("trashed = true")));
+    } else {
+      self = self.add_q(Some(&format!("trashed = false")));
     };
     self
   }

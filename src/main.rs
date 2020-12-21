@@ -30,6 +30,7 @@ async fn main() {
     )
     .subcommands(vec![
       SubCommand::with_name("ls").args(&[
+        Arg::with_name("folder").index(1).takes_value(true),
         Arg::with_name("query")
           .short("q")
           .long("query")
@@ -39,9 +40,9 @@ async fn main() {
           .long("max-size")
           .takes_value(true)
           .default_value("100"),
-        Arg::with_name("include-trash")
+        Arg::with_name("only-trashed")
           .short("t")
-          .long("include-trash"),
+          .long("only-trashed"),
         Arg::with_name("long").short("l").long("long"),
       ]),
       SubCommand::with_name("fetch").args(&[
@@ -74,17 +75,19 @@ async fn main() {
   let _tokencache = args.value_of("tokencache").unwrap();
 
   if let Some(matches) = args.subcommand_matches("ls") {
+    let folder = matches.value_of("folder").unwrap_or_else(|| "root");
+    let only_trashed = matches.is_present("only-trashed");
     let q = matches.value_of("query");
     let max_size = matches
       .value_of("page-size")
       .unwrap()
       .parse::<u16>()
       .unwrap();
-    let trashed = matches.is_present("include-trash");
     let show_long = matches.is_present("long");
     let fq = api::files::FilesListQuery::default()
-      .include_trash(trashed)
-      .set_q(q)
+      .add_q(Some(&format!("'{}' in parents", folder)))
+      .only_trashed(only_trashed)
+      .add_q(q)
       .set_page_size(max_size);
     let list = app.files_list(fq).await;
     list
@@ -96,7 +99,7 @@ async fn main() {
   if let Some(matches) = args.subcommand_matches("fetch") {
     let filename = matches.value_of("filename").unwrap();
     let destination = matches.value_of("destination");
-    let fq = api::files::FilesListQuery::default().set_q(Some(&format!("name = {:?}", &filename)));
+    let fq = api::files::FilesListQuery::default().add_q(Some(&format!("name = {:?}", &filename)));
     let list = app.files_list(fq).await;
     if let Some(file) = list.files.get(0) {
       app.fetch_file(file, destination, None).await;

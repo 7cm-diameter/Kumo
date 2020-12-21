@@ -42,9 +42,7 @@ async fn main() {
         Arg::with_name("include-trash")
           .short("t")
           .long("include-trash"),
-        Arg::with_name("long")
-          .short("l")
-          .long("long")
+        Arg::with_name("long").short("l").long("long"),
       ]),
       SubCommand::with_name("fetch").args(&[
         Arg::with_name("filename")

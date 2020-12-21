@@ -119,7 +119,10 @@ impl FileMeta {
     } else {
       String::new()
     };
-    let name = self.name.clone().unwrap_or_else(|| String::from("Untitled"));
+    let name = self
+      .name
+      .clone()
+      .unwrap_or_else(|| String::from("Untitled"));
     s += &name;
     s
   }
@@ -197,7 +200,9 @@ impl FilesListQuery {
   }
 
   pub fn include_trash(mut self, trashed: bool) -> Self {
-    if trashed { self.q = None };
+    if trashed {
+      self.q = None
+    };
     self
   }
 

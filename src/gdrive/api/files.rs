@@ -211,6 +211,7 @@ impl FilesListQuery {
   pub fn only_shared(mut self, shared: bool) -> Self {
     if shared {
       if let Some(q) = self.q {
+        // when "'root' in parents" in a query, no file or folder is returned even if "sharedWithMe" is in the query.
         self.q = Some(q.replace("'root' in parents", "sharedWithMe"));
       } else {
         self.q = Some(String::from("sharedWithMe"));

@@ -200,13 +200,19 @@ impl FilesListQuery {
   }
 
   pub fn only_trashed(&mut self, trashed: bool) -> Self {
-    let q = if trashed { "trashed = true" } else { "trashed = false" };
+    let q = if trashed {
+      "trashed = true"
+    } else {
+      "trashed = false"
+    };
     self.add_q(Some(q));
     self.clone()
   }
 
   pub fn only_shared(&mut self, shared: bool) -> Self {
-    if !shared { return self.clone() };
+    if !shared {
+      return self.clone();
+    };
     let q = if let Some(q) = &self.q {
       q.replace("'root' in parents", "sharedWithMe")
     } else {

@@ -210,16 +210,28 @@ impl FilesListQuery {
   }
 
   pub fn only_shared(&mut self, shared: bool) -> Self {
-    if !shared {
-      return self.clone();
-    };
-    let q = if let Some(q) = &self.q {
-      q.replace("'root' in parents", "sharedWithMe")
-    } else {
-      String::from("sharedWithMe")
-    };
-    println!("{}", &q);
-    self.q = Some(q);
+    if shared {
+      let q = if let Some(q) = &self.q {
+        q.replace("'root' in parents", "sharedWithMe")
+      } else {
+        String::from("sharedWithMe")
+      };
+      self.q = Some(q);
+    }
+    self.clone()
+  }
+
+  pub fn only_file(&mut self, file: bool) -> Self {
+    if file {
+      self.add_q(Some("mimeType != 'application/vnd.google-apps.folder'"));
+    }
+    self.clone()
+  }
+
+  pub fn only_folder(&mut self, folder: bool) -> Self {
+    if folder {
+      self.add_q(Some("mimeType = 'application/vnd.google-apps.folder'"));
+    }
     self.clone()
   }
 

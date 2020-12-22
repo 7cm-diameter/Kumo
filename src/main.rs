@@ -44,6 +44,8 @@ async fn main() {
           .short("t")
           .long("only-trashed"),
         Arg::with_name("only-shared").short("s").long("only-shared"),
+        Arg::with_name("only-file").short("f").long("only-file"),
+        Arg::with_name("only-folder").short("F").long("only-folder"),
         Arg::with_name("long").short("l").long("long"),
       ]),
       SubCommand::with_name("fetch").args(&[
@@ -81,6 +83,8 @@ async fn main() {
 
     let only_trashed = matches.is_present("only-trashed");
     let only_shared = matches.is_present("only-shared");
+    let only_file = matches.is_present("only-file");
+    let only_folder = matches.is_present("only-folder");
     let max_size = matches
       .value_of("page-size")
       .unwrap()
@@ -92,6 +96,8 @@ async fn main() {
       .add_q(Some(&format!("'{}' in parents", folder)))
       .only_trashed(only_trashed)
       .only_shared(only_shared)
+      .only_file(only_file)
+      .only_folder(only_folder)
       .add_q(q)
       .set_page_size(max_size);
 

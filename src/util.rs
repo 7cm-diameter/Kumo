@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Timelike, TimeZone};
+use chrono::{DateTime, Datelike, TimeZone, Timelike};
 
 pub fn format_datetime<T: TimeZone>(datetime: &DateTime<T>) -> String {
   let date = datetime.date();
@@ -52,9 +52,9 @@ impl ToString for SizeUnit {
   fn to_string(&self) -> String {
     let s = match self {
       SizeUnit::B => "B",
-      SizeUnit::KB => "KB",
-      SizeUnit::MB => "MB",
-      SizeUnit::GB => "GB",
+      SizeUnit::KB => "K",
+      SizeUnit::MB => "M",
+      SizeUnit::GB => "G",
     };
     s.to_string()
   }
@@ -71,15 +71,17 @@ impl SizeUnit {
   }
 }
 
-pub fn size_of(size: usize, unit: SizeUnit) -> String {
-  let div_size = size / 1024;
+pub fn size_of(size: f64, unit: SizeUnit) -> String {
+  let div_size = size / 1024.;
   if let Some(next_unit) = unit.next_unit() {
-    if div_size > 1 {
+    if div_size > 1. {
       size_of(div_size, next_unit)
     } else {
-      size.to_string() + &unit.to_string()
+      // size.to_string() + &unit.to_string()
+      format!("{:.1}", size) + &unit.to_string()
     }
   } else {
-    size.to_string() + &unit.to_string()
+    // size.to_string() + &unit.to_string()
+    format!("{:.1}", size) + &unit.to_string()
   }
 }

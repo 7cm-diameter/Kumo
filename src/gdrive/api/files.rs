@@ -173,13 +173,14 @@ impl FilesListQuery {
   }
 
   pub fn add_fields(&mut self, fields: &[Field]) -> Self {
-    let mut additional = fields
+    let mut new_fileds_query = fields
       .iter()
       .fold(String::from(","), |acc, s| acc + &s.to_string() + ",");
-    additional.pop(); // remove redundant `,` from the query.
-    self.fields.pop(); // remove right paren from the existed field query.
-    self.fields += &additional;
-    self.fields += ")";
+    new_fileds_query.pop(); // remove last `,` from the query because no field follows next.
+
+    let rparen = self.fields.pop(); // remove right paren temporary from the existed query to add new fields.
+    self.fields += &new_fileds_query;
+    self.fields += &rparen.unwrap().to_string();
     self.clone()
   }
 

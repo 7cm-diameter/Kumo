@@ -102,7 +102,7 @@ impl FileMeta {
       let datetime = if let Some(modtime) = &self.modified_time {
         util::format_datetime(modtime)
       } else {
-        " ".repeat(DATE_FORMAT_CHAR_LENGHT) // because util::format_datetime returns 14 charcters
+        " ".repeat(DATE_FORMAT_CHAR_LENGHT)
       };
       let size = if let Some(size) = &self.size {
         let size = util::size_of(size.parse::<f64>().unwrap(), util::SizeUnit::B);

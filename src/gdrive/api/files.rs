@@ -5,8 +5,8 @@ use crate::util;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
-const DATEFORMATLENGHT: usize = 14;
-const DATASIZELENGHT: usize = 6;
+const DATE_FORMAT_CHAR_LENGHT: usize = 14;    // e.g. 20 12 25 18:00 (14 chars)
+const FILESIZE_FORMAT_CHAR_LENGTH: usize = 6; // e.g. 123.4K (6 chars)
 
 // https://developers.google.com/drive/api/v3/reference/files/list
 #[derive(Debug, Serialize, Deserialize)]
@@ -102,18 +102,18 @@ impl FileMeta {
       let datetime = if let Some(modtime) = &self.modified_time {
         util::format_datetime(modtime)
       } else {
-        " ".repeat(DATEFORMATLENGHT) // because util::format_datetime returns 14 charcters
+        " ".repeat(DATE_FORMAT_CHAR_LENGHT) // because util::format_datetime returns 14 charcters
       };
       let size = if let Some(size) = &self.size {
         let size = util::size_of(size.parse::<f64>().unwrap(), util::SizeUnit::B);
         let occ_space = util::cell_length(&size);
-        if occ_space >= DATASIZELENGHT {
+        if occ_space >= FILESIZE_FORMAT_CHAR_LENGTH {
           size
         } else {
-          " ".repeat(DATASIZELENGHT - occ_space) + &size
+          " ".repeat(FILESIZE_FORMAT_CHAR_LENGTH - occ_space) + &size
         }
       } else {
-        " ".repeat(DATASIZELENGHT)
+        " ".repeat(FILESIZE_FORMAT_CHAR_LENGTH)
       };
       format!("{} {} ", size, datetime)
     } else {

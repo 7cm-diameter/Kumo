@@ -5,7 +5,7 @@ use crate::util;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
-const DATE_FORMAT_CHAR_LENGHT: usize = 14;    // e.g. 20 12 25 18:00 (14 chars)
+const DATE_FORMAT_CHAR_LENGHT: usize = 14; // e.g. 20 12 25 18:00 (14 chars)
 const FILESIZE_FORMAT_CHAR_LENGTH: usize = 6; // e.g. 123.4K (6 chars)
 
 // https://developers.google.com/drive/api/v3/reference/files/list
@@ -96,35 +96,29 @@ impl FileMeta {
     self.clone()
   }
 
-  pub fn show(&self, long: bool) -> String {
-    let mut s = String::new();
-    s += &if long {
-      let datetime = if let Some(modtime) = &self.modified_time {
-        util::format_datetime(modtime)
-      } else {
-        " ".repeat(DATE_FORMAT_CHAR_LENGHT)
-      };
-      let size = if let Some(size) = &self.size {
-        let size = util::size_of(size.parse::<f64>().unwrap(), util::SizeUnit::B);
-        let occ_space = util::cell_length(&size);
-        if occ_space >= FILESIZE_FORMAT_CHAR_LENGTH {
-          size
-        } else {
-          " ".repeat(FILESIZE_FORMAT_CHAR_LENGTH - occ_space) + &size
-        }
-      } else {
-        " ".repeat(FILESIZE_FORMAT_CHAR_LENGTH)
-      };
-      format!("{} {} ", size, datetime)
-    } else {
-      String::new()
-    };
-    let name = self
+  pub fn format_display(&self, with_metadata: bool) -> String {
+    let filename = self
       .name
       .clone()
       .unwrap_or_else(|| String::from("Untitled"));
-    s += &name;
-    s
+
+    if !with_metadata {
+      return filename;
+    };
+
+    let datetime = &self
+      .modified_time
+      .map_or_else(|| String::new(), |t| util::format_datetime(&t));
+    // To align vertically
+    let datetime = util::padding_left_until(datetime, DATE_FORMAT_CHAR_LENGHT);
+
+    let size = &self.size.clone().map_or_else(
+      || String::new(),
+      |s| util::size_of(s.parse::<f64>().unwrap(), util::SizeUnit::B),
+    );
+    let size = util::padding_left_until(size, FILESIZE_FORMAT_CHAR_LENGTH);
+
+    format!("{} {} {}", size, datetime, filename)
   }
 }
 
@@ -172,7 +166,7 @@ impl FilesListQuery {
     self.clone()
   }
 
-  pub fn add_fields(&mut self, fields: &[Field]) -> Self {
+  pub fn enqueue_filed_q(&mut self, fields: &[Field]) -> Self {
     let mut new_fileds_query = fields
       .iter()
       .fold(String::from(","), |acc, s| acc + &s.to_string() + ",");
@@ -189,7 +183,7 @@ impl FilesListQuery {
     self.clone()
   }
 
-  pub fn add_q(&mut self, q: Option<&str>) -> Self {
+  pub fn enqueue_search_q(&mut self, q: Option<&str>) -> Self {
     if let Some(q) = q {
       if let Some(base) = &self.q {
         self.q = Some(base.to_string() + &format!(" and {}", q));
@@ -200,19 +194,20 @@ impl FilesListQuery {
     self.clone()
   }
 
-  pub fn only_trashed(&mut self, trashed: bool) -> Self {
+  pub fn return_trashed_only(&mut self, trashed: bool) -> Self {
     let q = if trashed {
       "trashed = true"
     } else {
       "trashed = false"
     };
-    self.add_q(Some(q));
+    self.enqueue_search_q(Some(q));
     self.clone()
   }
 
-  pub fn only_shared(&mut self, shared: bool) -> Self {
+  pub fn return_shared_only(&mut self, shared: bool) -> Self {
     if shared {
       let q = if let Some(q) = &self.q {
+        // Because no element in intersection between "'root' in parents" and "sharedWithMe",
         q.replace("'root' in parents", "sharedWithMe")
       } else {
         String::from("sharedWithMe")
@@ -222,16 +217,16 @@ impl FilesListQuery {
     self.clone()
   }
 
-  pub fn only_file(&mut self, file: bool) -> Self {
+  pub fn return_file_only(&mut self, file: bool) -> Self {
     if file {
-      self.add_q(Some("mimeType != 'application/vnd.google-apps.folder'"));
+      self.enqueue_search_q(Some("mimeType != 'application/vnd.google-apps.folder'"));
     }
     self.clone()
   }
 
-  pub fn only_folder(&mut self, folder: bool) -> Self {
+  pub fn return_folder_only(&mut self, folder: bool) -> Self {
     if folder {
-      self.add_q(Some("mimeType = 'application/vnd.google-apps.folder'"));
+      self.enqueue_search_q(Some("mimeType = 'application/vnd.google-apps.folder'"));
     }
     self.clone()
   }
@@ -502,8 +497,8 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, m
     .await
     .unwrap();
 
-  if let Some(head_loc) = response.headers().get("location") {
-    if let Ok(resumable_uri) = head_loc.to_str() {
+  if let Some(location) = response.headers().get("location") {
+    if let Ok(resumable_uri) = location.to_str() {
       let file = fs::read(path).unwrap();
       client
         .put(resumable_uri)

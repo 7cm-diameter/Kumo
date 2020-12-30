@@ -11,7 +11,7 @@ const SCOPES: &[&str] = &[
 
 #[tokio::main]
 async fn main() {
-  let clasrgs = App::new("Kumo")
+  let clap = App::new("Kumo")
     .version("0.1.1")
     .author("7cm-diameter")
     .arg(
@@ -72,58 +72,62 @@ async fn main() {
 
   let app = GoogleDriveClient::default(SCOPES).await;
 
-  let args = clasrgs.get_matches();
+  let arg_matches = clap.get_matches();
 
-  let _clientsecret = args.value_of("clientsecret").unwrap();
-  let _tokencache = args.value_of("tokencache").unwrap();
-
-  if let Some(matches) = args.subcommand_matches("ls") {
-    let folder = matches.value_of("folder").unwrap_or_else(|| "root");
-    let q = matches.value_of("query");
-
-    let only_trashed = matches.is_present("only-trashed");
-    let only_shared = matches.is_present("only-shared");
-    let only_file = matches.is_present("only-file");
-    let only_folder = matches.is_present("only-folder");
-    let max_size = matches
+  if let Some(given_arguments) = arg_matches.subcommand_matches("ls") {
+    let target_folder_in_cloud = given_arguments.value_of("folder").unwrap_or_else(|| "root");
+    let q_for_filter_file = given_arguments.value_of("query");
+    let return_trashed_only = given_arguments.is_present("only-trashed");
+    let return_shared_only = given_arguments.is_present("only-shared");
+    let return_file_only = given_arguments.is_present("only-file");
+    let return_folder_only = given_arguments.is_present("only-folder");
+    let max_size = given_arguments
       .value_of("page-size")
       .unwrap()
       .parse::<u16>()
       .unwrap();
-    let show_long = matches.is_present("long");
+    let with_metadata = given_arguments.is_present("long");
 
-    let fq = api::files::FilesListQuery::default()
-      .add_q(Some(&format!("'{}' in parents", folder)))
-      .only_trashed(only_trashed)
-      .only_shared(only_shared)
-      .only_file(only_file)
-      .only_folder(only_folder)
-      .add_q(q)
+    let ls_query = api::files::FilesListQuery::default()
+      .enqueue_search_q(Some(&format!("'{}' in parents", target_folder_in_cloud)))
+      .return_trashed_only(return_trashed_only)
+      .return_shared_only(return_shared_only)
+      .return_file_only(return_file_only)
+      .return_folder_only(return_folder_only)
+      .enqueue_search_q(q_for_filter_file)
       .set_page_size(max_size);
 
-    let list = app.files_list(fq).await;
+    let filelist = app.files_list(ls_query).await;
 
-    list
+    filelist
       .files
       .iter()
-      .for_each(|f| println!("{}", &f.show(show_long)));
+      .for_each(|f| println!("{}", &f.format_display(with_metadata)));
   }
 
-  if let Some(matches) = args.subcommand_matches("fetch") {
-    let filename = matches.value_of("filename").unwrap();
-    let destination = matches.value_of("destination");
-    let fq = api::files::FilesListQuery::default().add_q(Some(&format!("name = {:?}", &filename)));
-    let list = app.files_list(fq).await;
-    if let Some(file) = list.files.get(0) {
-      app.fetch_file(file, destination, None).await;
+  if let Some(given_arguments) = arg_matches.subcommand_matches("fetch") {
+    let file_tobe_fetched_from_cloud = given_arguments.value_of("filename").unwrap();
+    let local_path_to_save = given_arguments.value_of("destination");
+    let ls_query = api::files::FilesListQuery::default()
+      .enqueue_search_q(Some(&format!("name = {:?}", &file_tobe_fetched_from_cloud))); // fetch files metadata which name is `fetched_file`
+
+    let filelist = app.files_list(ls_query).await;
+    // HACK: how to choose one item from filelist when it contains 2 or more elements.
+    if let Some(file) = filelist.files.get(0) {
+      app.fetch_file(file, local_path_to_save, None).await;
     }
   }
 
-  if let Some(matches) = args.subcommand_matches("upload") {
-    let paths: Vec<&str> = matches.values_of("paths").unwrap().collect();
-    let destination = matches.value_of("destination");
+  if let Some(given_arguments) = arg_matches.subcommand_matches("upload") {
+    let files_tobe_uploaded: Vec<&str> = given_arguments.values_of("paths").unwrap().collect();
+    let destination_in_cloud = given_arguments.value_of("destination");
+
     app
-      .upload_file(&paths, api::files::UploadType::Resumable, destination)
+      .upload_file(
+        &files_tobe_uploaded,
+        api::files::UploadType::Resumable,
+        destination_in_cloud,
+      )
       .await;
   }
 }

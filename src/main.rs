@@ -123,11 +123,7 @@ async fn main() {
     let destination_in_cloud = given_arguments.value_of("destination");
 
     app
-      .upload_file(
-        &files_tobe_uploaded,
-        api::files::UploadType::Resumable,
-        destination_in_cloud,
-      )
+      .upload_file(&files_tobe_uploaded, destination_in_cloud)
       .await;
   }
 }

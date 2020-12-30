@@ -325,23 +325,6 @@ impl ToString for Order {
   }
 }
 
-pub enum UploadType {
-  Media,
-  Multipart,
-  Resumable,
-}
-
-impl ToString for UploadType {
-  fn to_string(&self) -> String {
-    let s = match self {
-      UploadType::Media => "media",
-      UploadType::Multipart => "multipart",
-      UploadType::Resumable => "resumable",
-    };
-    String::from(s)
-  }
-}
-
 enum MimeType {
   BIN,
   CSS,
@@ -512,27 +495,10 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, m
   }
 }
 
-async fn upload_media(client: &Client, access_token: &str, path: &PathBuf, meta: FileMeta) {
-  let file = fs::read(path).unwrap();
-  client
-    .post("https://www.googleapis.com/upload/drive/v3/files?uploadType=media")
-    .bearer_auth(access_token)
-    .header(
-      reqwest::header::CONTENT_LENGTH,
-      meta.mime_type.unwrap_or_else(|| String::new()),
-    )
-    .header(reqwest::header::CONTENT_LENGTH, file.len())
-    .body(file)
-    .send()
-    .await
-    .unwrap();
-}
-
 pub async fn upload_file(
   client: &Client,
   access_token: &str,
   paths: &[&str],
-  upload_type: UploadType,
   destination: Option<&str>,
 ) {
   for p in paths {
@@ -549,10 +515,6 @@ pub async fn upload_file(
       meta.set_mimetype(MimeType::from(extension.to_str().unwrap()).into());
     }
 
-    match upload_type {
-      UploadType::Media => upload_media(client, access_token, &path, meta).await,
-      UploadType::Multipart => println!("Not implemented yet."),
-      UploadType::Resumable => upload_resumable(client, access_token, &path, meta).await,
-    }
+    upload_resumable(client, access_token, &path, meta).await;
   }
 }

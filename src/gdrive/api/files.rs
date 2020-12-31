@@ -346,7 +346,7 @@ impl ToString for Order {
   }
 }
 
-enum MimeType {
+pub enum MimeType {
   BIN,
   CSS,
   CSV,
@@ -405,6 +405,40 @@ impl From<&str> for MimeType {
       "zip" => MimeType::ZIP,
       _ => MimeType::PLAIN,
     }
+  }
+}
+
+impl ToString for MimeType {
+  fn to_string(&self) -> String {
+    let s = match self {
+      MimeType::BIN => "application/octet-stream",
+      MimeType::CSS => "text/csc",
+      MimeType::CSV => "text/csv",
+      MimeType::DOC => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      MimeType::FOLDER => "application/vnd.google-apps.folder",
+      MimeType::GZ => "application/gzip",
+      MimeType::GIF => "image/gif",
+      MimeType::HTML => "text/html",
+      MimeType::JPEG => "image/jpeg",
+      MimeType::JSON => "application/json",
+      MimeType::MP3 => "audio/mpeg",
+      MimeType::MP4 => "video/mp4",
+      MimeType::MPEG => "video/mpeg",
+      MimeType::PDF => "application/pdf",
+      MimeType::PLAIN => "text/plain",
+      MimeType::PNG => "image/png",
+      MimeType::PPT => "application/vnd.ms-powerpoint",
+      MimeType::PPTX => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      MimeType::TAR => "applicaiton/x-tar",
+      MimeType::TOML => "application/toml",
+      MimeType::TXT => "text/plain",
+      MimeType::XLS => "application/vnd.ms-excel",
+      MimeType::XLSX => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      MimeType::YAML => "application/yaml",
+      MimeType::ZIP => "application/zip",
+      _ => "",
+    };
+    String::from(s)
   }
 }
 

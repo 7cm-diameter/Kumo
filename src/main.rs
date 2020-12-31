@@ -50,10 +50,16 @@ async fn main() {
       ]),
       SubCommand::with_name("fetch").args(&[
         Arg::with_name("filename")
+          .short("f")
+          .long("filename")
           .takes_value(true)
           .required(true)
+          .multiple(true)
           .index(1),
-        Arg::with_name("destination").takes_value(true).index(2),
+        Arg::with_name("destination")
+          .short("d")
+          .long("destination")
+          .takes_value(true),
       ]),
       SubCommand::with_name("upload").args(&[
         Arg::with_name("paths")
@@ -89,12 +95,15 @@ async fn main() {
     let with_metadata = given_arguments.is_present("long");
 
     let ls_query = api::files::FilesListQuery::default()
-      .enqueue_search_q(Some(&format!("'{}' in parents", target_folder_in_cloud)))
+      .enqueue_search_q(
+        Some(&format!("'{}' in parents", target_folder_in_cloud)),
+        api::files::ConditionConjunction::And,
+      )
       .return_trashed_only(return_trashed_only)
       .return_shared_only(return_shared_only)
       .return_file_only(return_file_only)
       .return_folder_only(return_folder_only)
-      .enqueue_search_q(q_for_filter_file)
+      .enqueue_search_q(q_for_filter_file, api::files::ConditionConjunction::And)
       .set_page_size(max_size);
 
     let filelist = app.files_list(ls_query).await;
@@ -106,15 +115,21 @@ async fn main() {
   }
 
   if let Some(given_arguments) = arg_matches.subcommand_matches("fetch") {
-    let file_tobe_fetched_from_cloud = given_arguments.value_of("filename").unwrap();
+    let file_tobe_fetched_from_cloud: Vec<&str> =
+      given_arguments.values_of("filename").unwrap().collect();
     let local_path_to_save = given_arguments.value_of("destination");
-    let ls_query = api::files::FilesListQuery::default()
-      .enqueue_search_q(Some(&format!("name = {:?}", &file_tobe_fetched_from_cloud))); // fetch files metadata which name is `fetched_file`
+    let mut ls_query = api::files::FilesListQuery::default();
+    file_tobe_fetched_from_cloud.iter().for_each(|f| {
+      ls_query.enqueue_search_q(
+        Some(&format!("name = {:?}", &f)),
+        api::files::ConditionConjunction::Or,
+      );
+    });
 
     let filelist = app.files_list(ls_query).await;
-    // HACK: how to choose one item from filelist when it contains 2 or more elements.
-    if let Some(file) = filelist.files.get(0) {
-      app.fetch_file(file, local_path_to_save, None).await;
+
+    for f in filelist.files {
+      app.fetch_file(&f, local_path_to_save).await;
     }
   }
 
@@ -122,8 +137,8 @@ async fn main() {
     let files_tobe_uploaded: Vec<&str> = given_arguments.values_of("paths").unwrap().collect();
     let destination_in_cloud = given_arguments.value_of("destination");
 
-    app
-      .upload_file(&files_tobe_uploaded, destination_in_cloud)
-      .await;
+    for f in files_tobe_uploaded {
+      app.upload_file(&f, destination_in_cloud).await
+    }
   }
 }

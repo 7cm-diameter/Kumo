@@ -134,6 +134,21 @@ pub struct FilesListQuery {
   page_token:                    Option<String>,
 }
 
+pub enum ConditionConjunction {
+  And,
+  Or,
+}
+
+impl ToString for ConditionConjunction {
+  fn to_string(&self) -> String {
+    let s = match self {
+      ConditionConjunction::And => "and",
+      ConditionConjunction::Or => "or",
+    };
+    String::from(s)
+  }
+}
+
 impl Default for FilesListQuery {
   fn default() -> Self {
     Self {
@@ -183,10 +198,10 @@ impl FilesListQuery {
     self.clone()
   }
 
-  pub fn enqueue_search_q(&mut self, q: Option<&str>) -> Self {
+  pub fn enqueue_search_q(&mut self, q: Option<&str>, conj: ConditionConjunction) -> Self {
     if let Some(q) = q {
       if let Some(base) = &self.q {
-        self.q = Some(base.to_string() + &format!(" and {}", q));
+        self.q = Some(base.to_string() + &format!(" {} {}", conj.to_string(), q));
         return self.clone();
       }
       self.q = Some(q.to_string());
@@ -200,7 +215,7 @@ impl FilesListQuery {
     } else {
       "trashed = false"
     };
-    self.enqueue_search_q(Some(q));
+    self.enqueue_search_q(Some(q), ConditionConjunction::And);
     self.clone()
   }
 
@@ -219,14 +234,20 @@ impl FilesListQuery {
 
   pub fn return_file_only(&mut self, file: bool) -> Self {
     if file {
-      self.enqueue_search_q(Some("mimeType != 'application/vnd.google-apps.folder'"));
+      self.enqueue_search_q(
+        Some("mimeType != 'application/vnd.google-apps.folder'"),
+        ConditionConjunction::And,
+      );
     }
     self.clone()
   }
 
   pub fn return_folder_only(&mut self, folder: bool) -> Self {
     if folder {
-      self.enqueue_search_q(Some("mimeType = 'application/vnd.google-apps.folder'"));
+      self.enqueue_search_q(
+        Some("mimeType = 'application/vnd.google-apps.folder'"),
+        ConditionConjunction::And,
+      );
     }
     self.clone()
   }
@@ -438,7 +459,6 @@ pub async fn fetch_file(
   access_token: &str,
   file: &FileMeta,
   destination: Option<&str>,
-  filename: Option<&str>,
 ) {
   let response = client
     .get(&format!(
@@ -450,15 +470,12 @@ pub async fn fetch_file(
     .await
     .unwrap();
 
-  let filename = filename.unwrap_or_else(|| file.name.as_ref().unwrap());
+  let path_to_save = destination.map_or_else(
+    || PathBuf::from(file.name.as_ref().unwrap()),
+    |d| PathBuf::from(d).join(file.name.as_ref().unwrap()),
+  );
 
-  let filename = if let Some(path) = destination {
-    PathBuf::from(path).join(filename)
-  } else {
-    PathBuf::from(filename)
-  };
-
-  let mut f = fs::File::create(filename).unwrap();
+  let mut f = fs::File::create(path_to_save).unwrap();
 
   io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut f).unwrap();
 }
@@ -498,23 +515,21 @@ async fn upload_resumable(client: &Client, access_token: &str, path: &PathBuf, m
 pub async fn upload_file(
   client: &Client,
   access_token: &str,
-  paths: &[&str],
+  path: &str,
   destination: Option<&str>,
 ) {
-  for p in paths {
-    let mut meta = FileMeta::default();
-    if let Some(parent) = &destination {
-      meta.set_parents(&[&parent]);
-    }
-    let path = PathBuf::from(p);
-
-    if let Some(filename) = path.file_name() {
-      meta.set_name(filename.to_str().unwrap());
-    };
-    if let Some(extension) = path.extension() {
-      meta.set_mimetype(MimeType::from(extension.to_str().unwrap()).into());
-    }
-
-    upload_resumable(client, access_token, &path, meta).await;
+  let mut meta = FileMeta::default();
+  if let Some(parent) = &destination {
+    meta.set_parents(&[&parent]);
   }
+  let path = PathBuf::from(path);
+
+  if let Some(filename) = path.file_name() {
+    meta.set_name(filename.to_str().unwrap());
+  };
+  if let Some(extension) = path.extension() {
+    meta.set_mimetype(MimeType::from(extension.to_str().unwrap()).into());
+  }
+
+  upload_resumable(client, access_token, &path, meta).await;
 }

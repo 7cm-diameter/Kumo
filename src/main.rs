@@ -1,7 +1,7 @@
 extern crate yup_oauth2 as oauth2;
 
 use clap::{App, Arg, SubCommand};
-use kumo::gdrive::{api, app::GoogleDriveClient};
+use kumo::gdrive::{api, GoogleDriveClient};
 
 const SCOPES: &[&str] = &[
   "https://www.googleapis.com/auth/drive",

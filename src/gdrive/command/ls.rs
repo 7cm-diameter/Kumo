@@ -1,8 +1,6 @@
-use crate::gdrive::api::files;
+use crate::{gdrive::api::files, share::util::DisplayableFileData};
 use clap::ArgMatches;
 use reqwest::Client;
-
-type DisplayableFileData = String;
 
 pub fn ls<'a>(
   client: &Client,

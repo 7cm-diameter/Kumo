@@ -5,9 +5,6 @@ use crate::share::util;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
-const DATE_FORMAT_CHAR_LENGHT: usize = 14; // e.g. 20 12 25 18:00 (14 chars)
-const FILESIZE_FORMAT_CHAR_LENGTH: usize = 6; // e.g. 123.4K (6 chars)
-
 // https://developers.google.com/drive/api/v3/reference/files/list
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -95,8 +92,10 @@ impl FileMeta {
     self.size = Some(size.to_string());
     self.clone()
   }
+}
 
-  pub fn format_display(&self, with_metadata: bool) -> String {
+impl util::FormatDisplay for FileMeta {
+  fn format_display(&self, with_metadata: bool) -> util::DisplayableFileData {
     let filename = self
       .name
       .clone()
@@ -110,13 +109,13 @@ impl FileMeta {
       .modified_time
       .map_or_else(|| String::new(), |t| util::format_datetime(&t));
     // To align vertically
-    let datetime = util::padding_left_until(datetime, DATE_FORMAT_CHAR_LENGHT);
+    let datetime = util::padding_left_until(datetime, util::DATE_FORMAT_CHAR_LENGHT);
 
     let size = &self.size.clone().map_or_else(
       || String::new(),
       |s| util::size_of(s.parse::<f64>().unwrap(), util::SizeUnit::B),
     );
-    let size = util::padding_left_until(size, FILESIZE_FORMAT_CHAR_LENGTH);
+    let size = util::padding_left_until(size, util::FILESIZE_FORMAT_CHAR_LENGTH);
 
     format!("{} {} {}", size, datetime, filename)
   }

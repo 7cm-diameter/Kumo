@@ -1,5 +1,14 @@
 use chrono::{DateTime, Datelike, TimeZone, Timelike};
 
+pub const DATE_FORMAT_CHAR_LENGHT: usize = 14; // e.g. 20 12 25 18:00 (14 chars)
+pub const FILESIZE_FORMAT_CHAR_LENGTH: usize = 6; // e.g. 123.4K (6 chars)
+
+pub type DisplayableFileData = String;
+
+pub trait FormatDisplay {
+  fn format_display(&self, with_metadata: bool) -> DisplayableFileData;
+}
+
 pub fn format_datetime<T: TimeZone>(datetime: &DateTime<T>) -> String {
   let date = datetime.date();
 

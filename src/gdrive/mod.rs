@@ -3,6 +3,11 @@ pub mod command;
 
 extern crate yup_oauth2 as oauth2;
 
+use crate::{
+  gdrive::command::ls::ls,
+  share::{interface::Command, util::DisplayableFileData},
+};
+use async_trait::async_trait;
 use clap::ArgMatches;
 use oauth2::{
   read_application_secret, AccessToken, InstalledFlowAuthenticator,
@@ -50,9 +55,9 @@ impl GoogleDriveClient {
 }
 
 impl GoogleDriveClient {
-  pub async fn ls<'a>(&self, _args: &ArgMatches<'a>) -> api::files::FileList {
-    todo!();
-  }
+  // pub async fn ls<'a>(&self, _args: &ArgMatches<'a>) -> api::files::FileList {
+  //   todo!();
+  // }
 
   pub async fn fetch<'a>(&self, _args: &ArgMatches<'a>) {
     todo!();
@@ -64,5 +69,12 @@ impl GoogleDriveClient {
 
   pub async fn upload<'a>(&self, _args: &ArgMatches<'a>) {
     todo!();
+  }
+}
+
+#[async_trait]
+impl Command for GoogleDriveClient {
+  async fn ls<'a>(&self, args: &ArgMatches<'a>) -> Vec<DisplayableFileData> {
+    ls(&self.client, self.access_token.as_str(), args).await
   }
 }

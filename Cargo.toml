@@ -14,3 +14,4 @@ tokio = { version = "*", features = ["macros", "tcp", "dns", "io-util"] }
 reqwest = { version = "*", features = ["blocking", "json", "rustls-tls"] }
 chrono = "*"
 clap = "*"
+async-trait = "*"

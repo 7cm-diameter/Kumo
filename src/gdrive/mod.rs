@@ -1,7 +1,9 @@
 pub mod api;
+pub mod command;
 
 extern crate yup_oauth2 as oauth2;
 
+use clap::ArgMatches;
 use oauth2::{
   read_application_secret, AccessToken, InstalledFlowAuthenticator,
   InstalledFlowReturnMethod::HTTPRedirect,
@@ -48,19 +50,19 @@ impl GoogleDriveClient {
 }
 
 impl GoogleDriveClient {
-  pub async fn files_list(&self, params: api::files::FilesListQuery) -> api::files::FileList {
-    api::files::files_list(&self.client, self.access_token(), params).await
+  pub async fn ls<'a>(&self, _args: &ArgMatches<'a>) -> api::files::FileList {
+    todo!();
   }
 
-  pub async fn fetch_file(&self, file: &api::files::FileMeta, destination: Option<&str>) {
-    api::files::fetch_file(&self.client, self.access_token(), file, destination).await;
+  pub async fn fetch<'a>(&self, _args: &ArgMatches<'a>) {
+    todo!();
   }
 
   // pub async fn drives_list(&self, params: api::drives::DrivesListQuery) -> api::drives::DriveList {
   //   api::drives::drives_list(&self.client, self.access_token(), params).await
   // }
 
-  pub async fn upload_file(&self, path: &str, destination: Option<&str>) {
-    api::files::upload_file(&self.client, self.access_token(), path, destination).await;
+  pub async fn upload<'a>(&self, _args: &ArgMatches<'a>) {
+    todo!();
   }
 }

@@ -1,7 +1,7 @@
 extern crate yup_oauth2 as oauth2;
 
 use clap::{App, Arg, SubCommand};
-use kumo::gdrive::{api, GoogleDriveClient};
+use kumo::gdrive::GoogleDriveClient;
 
 const SCOPES: &[&str] = &[
   "https://www.googleapis.com/auth/drive",
@@ -76,69 +76,7 @@ async fn main() {
       ]),
     ]);
 
-  let app = GoogleDriveClient::default(SCOPES).await;
+  let _app = GoogleDriveClient::default(SCOPES).await;
 
-  let arg_matches = clap.get_matches();
-
-  if let Some(given_arguments) = arg_matches.subcommand_matches("ls") {
-    let target_folder_in_cloud = given_arguments.value_of("folder").unwrap_or_else(|| "root");
-    let q_for_filter_file = given_arguments.value_of("query");
-    let return_trashed_only = given_arguments.is_present("only-trashed");
-    let return_shared_only = given_arguments.is_present("only-shared");
-    let return_file_only = given_arguments.is_present("only-file");
-    let return_folder_only = given_arguments.is_present("only-folder");
-    let max_size = given_arguments
-      .value_of("page-size")
-      .unwrap()
-      .parse::<u16>()
-      .unwrap();
-    let with_metadata = given_arguments.is_present("long");
-
-    let ls_query = api::files::FilesListQuery::default()
-      .enqueue_search_q(
-        Some(&format!("'{}' in parents", target_folder_in_cloud)),
-        api::files::ConditionConjunction::And,
-      )
-      .return_trashed_only(return_trashed_only)
-      .return_shared_only(return_shared_only)
-      .return_file_only(return_file_only)
-      .return_folder_only(return_folder_only)
-      .enqueue_search_q(q_for_filter_file, api::files::ConditionConjunction::And)
-      .set_page_size(max_size);
-
-    let filelist = app.files_list(ls_query).await;
-
-    filelist
-      .files
-      .iter()
-      .for_each(|f| println!("{}", &f.format_display(with_metadata)));
-  }
-
-  if let Some(given_arguments) = arg_matches.subcommand_matches("fetch") {
-    let file_tobe_fetched_from_cloud: Vec<&str> =
-      given_arguments.values_of("filename").unwrap().collect();
-    let local_path_to_save = given_arguments.value_of("destination");
-    let mut ls_query = api::files::FilesListQuery::default();
-    file_tobe_fetched_from_cloud.iter().for_each(|f| {
-      ls_query.enqueue_search_q(
-        Some(&format!("name = {:?}", &f)),
-        api::files::ConditionConjunction::Or,
-      );
-    });
-
-    let filelist = app.files_list(ls_query).await;
-
-    for f in filelist.files {
-      app.fetch_file(&f, local_path_to_save).await;
-    }
-  }
-
-  if let Some(given_arguments) = arg_matches.subcommand_matches("upload") {
-    let files_tobe_uploaded: Vec<&str> = given_arguments.values_of("paths").unwrap().collect();
-    let destination_in_cloud = given_arguments.value_of("destination");
-
-    for f in files_tobe_uploaded {
-      app.upload_file(&f, destination_in_cloud).await
-    }
-  }
+  let _arg_matches = clap.get_matches();
 }

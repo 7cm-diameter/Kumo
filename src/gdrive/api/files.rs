@@ -107,14 +107,13 @@ impl util::FormatDisplay for FileMeta {
 
     let datetime = &self
       .modified_time
-      .map_or_else(|| String::new(), |t| util::format_datetime(&t));
+      .map_or_else(String::new, |t| util::format_datetime(&t));
     // To align vertically
     let datetime = util::padding_left_until(datetime, util::DATE_FORMAT_CHAR_LENGHT);
 
-    let size = &self.size.clone().map_or_else(
-      || String::new(),
-      |s| util::size_of(s.parse::<f64>().unwrap(), util::SizeUnit::B),
-    );
+    let size = &self.size.clone().map_or_else(String::new, |s| {
+      util::size_of(s.parse::<f64>().unwrap(), util::SizeUnit::B)
+    });
     let size = util::padding_left_until(size, util::FILESIZE_FORMAT_CHAR_LENGTH);
 
     format!("{} {} {}", size, datetime, filename)

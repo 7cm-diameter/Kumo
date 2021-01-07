@@ -5,10 +5,10 @@ use crate::{
 use clap::ArgMatches;
 use reqwest::Client;
 
-pub async fn ls<'a>(
+pub async fn ls(
   client: &Client,
   access_token: &str,
-  args: &ArgMatches<'a>,
+  args: &ArgMatches<'_>,
 ) -> Vec<DisplayableFileData> {
   let ls_query = from_args_into_ls_query(args);
   files::files_list(client, access_token, ls_query)

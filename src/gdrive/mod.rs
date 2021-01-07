@@ -54,24 +54,6 @@ impl GoogleDriveClient {
   }
 }
 
-impl GoogleDriveClient {
-  // pub async fn ls<'a>(&self, _args: &ArgMatches<'a>) -> api::files::FileList {
-  //   todo!();
-  // }
-
-  pub async fn fetch<'a>(&self, _args: &ArgMatches<'a>) {
-    todo!();
-  }
-
-  // pub async fn drives_list(&self, params: api::drives::DrivesListQuery) -> api::drives::DriveList {
-  //   api::drives::drives_list(&self.client, self.access_token(), params).await
-  // }
-
-  pub async fn upload<'a>(&self, _args: &ArgMatches<'a>) {
-    todo!();
-  }
-}
-
 #[async_trait]
 impl Command for GoogleDriveClient {
   async fn ls<'a>(&self, args: &ArgMatches<'a>) -> Vec<DisplayableFileData> {

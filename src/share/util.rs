@@ -98,10 +98,10 @@ pub fn cell_length(s: &str) -> usize {
   s.chars().fold(0, |acc, c| acc + count_occupied_cell(&c))
 }
 
-pub fn padding_left_until(base: &String, maxchars: usize) -> String {
+pub fn padding_left_until(base: &str, maxchars: usize) -> String {
   let nchars = base.len();
   if nchars >= maxchars {
     return base.to_string();
   }
-  return " ".repeat(maxchars - nchars) + &base;
+  " ".repeat(maxchars - nchars) + base
 }

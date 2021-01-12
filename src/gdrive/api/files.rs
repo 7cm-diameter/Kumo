@@ -87,11 +87,6 @@ impl FileMeta {
     self.parents = Some(parents.iter().map(|s| s.to_string()).collect());
     self.clone()
   }
-
-  pub fn set_size(&mut self, size: usize) -> Self {
-    self.size = Some(size.to_string());
-    self.clone()
-  }
 }
 
 impl util::FormatDisplay for FileMeta {
@@ -132,16 +127,16 @@ pub struct FilesListQuery {
   page_token:                    Option<String>,
 }
 
-pub enum ConditionConjunction {
+pub enum Conjunction {
   And,
   Or,
 }
 
-impl ToString for ConditionConjunction {
+impl ToString for Conjunction {
   fn to_string(&self) -> String {
     let s = match self {
-      ConditionConjunction::And => "and",
-      ConditionConjunction::Or => "or",
+      Conjunction::And => "and",
+      Conjunction::Or => "or",
     };
     String::from(s)
   }
@@ -159,10 +154,11 @@ impl Default for FilesListQuery {
         Field::CreatedTime,
         Field::ModifiedTime,
         Field::Size,
+        Field::Parents,
       ]),
       q:                             None,
       order_by:                      None,
-      page_size:                     100,
+      page_size:                     1000,
       page_token:                    None,
     }
   }
@@ -179,6 +175,7 @@ impl FilesListQuery {
     self.clone()
   }
 
+  // TODO: Must be refatored
   pub fn enqueue_filed_q(&mut self, fields: &[Field]) -> Self {
     let mut new_fileds_query = fields
       .iter()
@@ -196,73 +193,33 @@ impl FilesListQuery {
     self.clone()
   }
 
-  pub fn enqueue_search_q(&mut self, q: Option<&str>, conj: ConditionConjunction) -> Self {
-    if let Some(q) = q {
-      if let Some(base) = &self.q {
-        self.q = Some(base.to_string() + &format!(" {} {}", conj.to_string(), q));
-        return self.clone();
-      }
-      self.q = Some(q.to_string());
-    };
+  pub fn overwrite_search_q(&mut self, q: &str) -> Self {
+    self.q = Some(String::from(q));
     self.clone()
   }
 
-  pub fn return_trashed_only(&mut self, trashed: bool) -> Self {
-    let q = if trashed {
-      "trashed = true"
-    } else {
-      "trashed = false"
-    };
-    self.enqueue_search_q(Some(q), ConditionConjunction::And);
+  pub fn clear_search_q(&mut self) -> Self {
+    self.q = None;
     self.clone()
   }
 
-  pub fn return_shared_only(&mut self, shared: bool) -> Self {
-    if shared {
-      let q = if let Some(q) = &self.q {
-        // Because no element in intersection between "'root' in parents" and "sharedWithMe",
-        q.replace("'root' in parents", "sharedWithMe")
-      } else {
-        String::from("sharedWithMe")
-      };
-      self.q = Some(q);
+  pub fn enqueue_search_q(&mut self, q: &str, conj: Conjunction) -> Self {
+    if let Some(base) = &self.q {
+      self.q = Some(base.to_string() + &format!(" {} {}", conj.to_string(), q));
+      return self.clone();
     }
+    self.q = Some(q.to_string());
     self.clone()
   }
 
-  pub fn return_file_only(&mut self, file: bool) -> Self {
-    if file {
-      self.enqueue_search_q(
-        Some("mimeType != 'application/vnd.google-apps.folder'"),
-        ConditionConjunction::And,
-      );
-    }
-    self.clone()
-  }
-
-  pub fn return_folder_only(&mut self, folder: bool) -> Self {
-    if folder {
-      self.enqueue_search_q(
-        Some("mimeType = 'application/vnd.google-apps.folder'"),
-        ConditionConjunction::And,
-      );
-    }
-    self.clone()
-  }
-
-  pub fn set_order(mut self, order: Order) -> Self {
+  pub fn set_order(&mut self, order: Order) -> Self {
     self.order_by = Some(order.to_string());
-    self
+    self.clone()
   }
 
-  pub fn set_page_size(mut self, size: u16) -> Self {
-    self.page_size = size;
-    self
-  }
-
-  pub fn set_page_token(mut self, token: &str) -> Self {
+  pub fn set_page_token(&mut self, token: &str) -> Self {
     self.page_token = Some(String::from(token));
-    self
+    self.clone()
   }
 }
 
@@ -280,6 +237,7 @@ pub enum Field {
   CreatedTime,
   ModifiedTime,
   Size,
+  NextPageToken,
 }
 
 impl ToString for Field {
@@ -297,6 +255,7 @@ impl ToString for Field {
       Field::CreatedTime => "createdTime",
       Field::ModifiedTime => "modifiedTime",
       Field::Size => "size",
+      Field::NextPageToken => "nextPageToken",
     };
     String::from(s)
   }
@@ -307,7 +266,7 @@ fn fields_to_query(fields: &[Field]) -> String {
     .iter()
     .fold(String::from("files("), |acc, s| acc + &s.to_string() + ",");
   query.pop(); // remove redundant `,` from the query.
-  query += ")";
+  query += "),nextPageToken"; // TODO: Must be refactored
   query
 }
 
@@ -473,11 +432,11 @@ impl Into<&str> for MimeType {
   }
 }
 
-pub async fn files_list(client: &Client, access_token: &str, params: FilesListQuery) -> FileList {
+pub async fn files_list(client: &Client, access_token: &str, params: &FilesListQuery) -> FileList {
   client
     .get("https://www.googleapis.com/drive/v3/files")
     .bearer_auth(access_token)
-    .query(&params)
+    .query(params)
     .send()
     .await
     .unwrap()

@@ -3,6 +3,8 @@ extern crate yup_oauth2 as oauth2;
 use clap::{App, Arg, SubCommand};
 use kumo::gdrive::GoogleDriveClient;
 
+use kumo::share::interface::Command;
+
 const SCOPES: &[&str] = &[
   "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/drive.file",
@@ -30,23 +32,57 @@ async fn main() {
     )
     .subcommands(vec![
       SubCommand::with_name("ls").args(&[
-        Arg::with_name("folder").index(1).takes_value(true),
+        // arguments that takes value
+        Arg::with_name("folder")
+          .value_name("FOLDER")
+          .index(1)
+          .takes_value(true),
+        Arg::with_name("ordered-by")
+          .short("o")
+          .long("ordered-by")
+          .takes_value(true),
         Arg::with_name("query")
           .short("q")
           .long("query")
           .takes_value(true),
-        Arg::with_name("page-size")
-          .short("S")
-          .long("max-size")
+        Arg::with_name("name-contains")
+          .short("c")
+          .long("name-contains")
           .takes_value(true)
-          .default_value("100"),
-        Arg::with_name("only-trashed")
-          .short("t")
-          .long("only-trashed"),
-        Arg::with_name("only-shared").short("s").long("only-shared"),
-        Arg::with_name("only-file").short("f").long("only-file"),
-        Arg::with_name("only-folder").short("F").long("only-folder"),
+          .multiple(true),
+        Arg::with_name("name-matched")
+          .short("m")
+          .long("name-matched")
+          .takes_value(true)
+          .multiple(true),
+        Arg::with_name("modified-before")
+          .short("b")
+          .long("modified-before")
+          .takes_value(true),
+        Arg::with_name("modified-after")
+          .short("a")
+          .long("modified-after")
+          .takes_value(true),
+        Arg::with_name("depth")
+          .short("d")
+          .long("depth")
+          .takes_value(true),
+        // arguments that do not takes value (flags)
         Arg::with_name("long").short("l").long("long"),
+        Arg::with_name("recursive").short("r").long("recursive"),
+        Arg::with_name("all").short("A").long("all"),
+        Arg::with_name("search-trashed-only")
+          .short("t")
+          .long("search-trashed-only"),
+        Arg::with_name("search-shared-only")
+          .short("s")
+          .long("search-shared-only"),
+        Arg::with_name("search-file-only")
+          .short("f")
+          .long("search-file-file"),
+        Arg::with_name("search-folder-only")
+          .short("F")
+          .long("search-folder-only"),
       ]),
       SubCommand::with_name("fetch").args(&[
         Arg::with_name("filename")
@@ -76,7 +112,12 @@ async fn main() {
       ]),
     ]);
 
-  let _app = GoogleDriveClient::default(SCOPES).await;
+  let app = GoogleDriveClient::default(SCOPES).await;
 
-  let _arg_matches = clap.get_matches();
+  let arg_matches = clap.get_matches();
+
+  if let Some(args) = arg_matches.subcommand_matches("ls") {
+    let files = app.ls(args).await;
+    files.iter().for_each(|f| println!("{}", f));
+  }
 }

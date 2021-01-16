@@ -1,5 +1,6 @@
 use crate::{
   gdrive::api::files,
+  gdrive::utils::find_parents_id,
   share::util::{DisplayableFileData, FormatDisplay},
 };
 use clap::ArgMatches;
@@ -10,7 +11,7 @@ pub async fn ls(
   access_token: &str,
   args: &ArgMatches<'_>,
 ) -> Vec<DisplayableFileData> {
-  let mut ls_query = from_args_into_ls_query(args);
+  let mut ls_query = from_args_into_ls_query(client, access_token, args).await;
   let show_metadata = args.is_present("long");
   let mut displayed_file: Vec<DisplayableFileData> = Vec::new();
   // TODO: Must be refactored
@@ -36,7 +37,11 @@ pub async fn ls(
 // search file type: A > q > f > F
 // search file name: A > q > m > x
 // search depth: A > r > d (cannot use without `r`)
-pub fn from_args_into_ls_query(args: &ArgMatches) -> files::FilesListQuery {
+pub async fn from_args_into_ls_query(
+  client: &Client,
+  access_token: &str,
+  args: &ArgMatches<'_>,
+) -> files::FilesListQuery {
   let mut ls_query = files::FilesListQuery::default();
 
   if args.is_present("all") {
@@ -50,7 +55,8 @@ pub fn from_args_into_ls_query(args: &ArgMatches) -> files::FilesListQuery {
   }
 
   if let Some(folder) = args.value_of("folder") {
-    ls_query.overwrite_search_q(&format!("'{}' in parents", folder));
+    let parent_id = find_parents_id(client, access_token, folder).await;
+    ls_query.overwrite_search_q(&format!("'{}' in parents", parent_id));
   }
 
   if args.is_present("search-shared-only") {

@@ -49,13 +49,8 @@ pub fn from_args_into_ls_query(args: &ArgMatches) -> files::FilesListQuery {
     return ls_query;
   }
 
-  ls_query.overwrite_search_q("'root' in parents");
   if let Some(folder) = args.value_of("folder") {
-    if folder == "ALL" {
-      ls_query.clear_search_q();
-    } else {
-      ls_query.overwrite_search_q(&format!("'{}' in parents", folder));
-    }
+    ls_query.overwrite_search_q(&format!("'{}' in parents", folder));
   }
 
   if args.is_present("search-shared-only") {

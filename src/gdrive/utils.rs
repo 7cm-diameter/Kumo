@@ -1,6 +1,8 @@
 use crate::gdrive::api::files;
 use reqwest::Client;
 use std::collections::HashMap;
+use std::iter::FromIterator;
+use std::path::PathBuf;
 
 pub async fn find_parents_id<'a>(
   client: &'a Client,
@@ -8,14 +10,7 @@ pub async fn find_parents_id<'a>(
   parents_name: &'a str,
 ) -> String {
   // Fetch folders' metadata from drive
-  let mut ls_query = files::FilesListQuery::default();
-  ls_query.enqueue_search_q(
-    "mimeType = 'application/vnd.google-apps.folder'",
-    files::Conjunction::And,
-  );
-  let folders = files::files_list(client, access_token, &ls_query)
-    .await
-    .files;
+  let folders = fetch_all_folders(client, access_token).await;
 
   let path_components: Vec<&str> = parents_name.split('/').collect();
   let candidate_folders: Vec<files::FileMeta> = folders
@@ -28,18 +23,10 @@ pub async fn find_parents_id<'a>(
     .cloned()
     .collect();
 
-  let mut id_to_metadata: HashMap<String, files::FileMeta> = HashMap::new();
-  folders.iter().for_each(|m| {
-    let id = m.id.clone().unwrap_or_else(String::new);
-    id_to_metadata.insert(id, m.clone());
-  });
-
+  let id2meta = hash_id_to_metadata(&folders);
   let ids_lead_to_candidates: Vec<Vec<String>> = candidate_folders
     .iter()
-    .map(|f| {
-      let ids = vec![f.id.clone().unwrap_or_else(String::new)];
-      append_parents_id(ids, &id_to_metadata)
-    })
+    .filter_map(|f| trace_id_paths(f, &id2meta))
     .flatten()
     .map(|mut ids| {
       ids.reverse();
@@ -49,17 +36,7 @@ pub async fn find_parents_id<'a>(
 
   let paths_to_candidates: Vec<String> = ids_lead_to_candidates
     .iter()
-    .map(|ids| {
-      let names: Vec<String> = ids
-        .iter()
-        .filter(|id| id_to_metadata.contains_key(&id.to_string()))
-        .map(|id| {
-          let meta = id_to_metadata.get(id).unwrap();
-          meta.name.clone().unwrap_or_else(String::new)
-        })
-        .collect();
-      names.join("/")
-    })
+    .filter_map(|ids| name_path_from_id_path(ids, &id2meta))
     .collect();
 
   for (path, ids) in paths_to_candidates.iter().zip(ids_lead_to_candidates) {
@@ -70,31 +47,82 @@ pub async fn find_parents_id<'a>(
   String::new()
 }
 
-// TODO: Need refactoring!
-fn append_parents_id(
-  ids: Vec<String>,
-  id_to_meta: &HashMap<String, files::FileMeta>,
-) -> Vec<Vec<String>> {
-  let shallowest_folder_id = ids.last().unwrap();
-  if let Some(shallowest_folder) = id_to_meta.get(shallowest_folder_id) {
+pub async fn fetch_all_folders<'a>(
+  client: &'a Client,
+  access_token: &'a str,
+) -> Vec<files::FileMeta> {
+  let mut ls_query = files::FilesListQuery::default();
+  ls_query.enqueue_search_q(
+    "mimeType = 'application/vnd.google-apps.folder'",
+    files::Conjunction::And,
+  );
+  files::files_list(client, access_token, &ls_query)
+    .await
+    .files
+}
+
+pub async fn fetch_all_contents<'a>(
+  client: &'a Client,
+  access_token: &'a str,
+) -> Vec<files::FileMeta> {
+  let ls_query = files::FilesListQuery::default();
+  files::files_list(client, access_token, &ls_query)
+    .await
+    .files
+}
+
+type IdToFileMeta = HashMap<String, files::FileMeta>;
+
+pub fn hash_id_to_metadata(metadata: &[files::FileMeta]) -> IdToFileMeta {
+  let mut hash = HashMap::new();
+  metadata.iter().for_each(|m| {
+    let id = m.id.clone().unwrap_or_else(String::new);
+    hash.insert(id, m.clone());
+  });
+  hash
+}
+
+type IdPath = Vec<String>;
+
+fn append_parents_id(id_path: IdPath, id2meta: &IdToFileMeta) -> Vec<Vec<String>> {
+  let shallowest_folder_id = id_path.last().unwrap();
+  if let Some(shallowest_folder) = id2meta.get(shallowest_folder_id) {
     if let Some(parents_id) = &shallowest_folder.parents {
       let ids_with_parents: Vec<Vec<String>> = parents_id
         .iter()
         .map(|p| {
-          let mut tmp = ids.clone();
+          let mut tmp = id_path.clone();
           tmp.push(p.to_string());
           tmp
         })
         .collect();
       ids_with_parents
         .iter()
-        .map(|ids| append_parents_id(ids.to_vec(), id_to_meta))
+        .map(|ids| append_parents_id(ids.to_vec(), id2meta))
         .flatten()
         .collect()
     } else {
-      vec![ids]
+      vec![id_path]
     }
   } else {
-    vec![ids]
+    vec![id_path]
   }
+}
+
+pub fn trace_id_paths(end: &files::FileMeta, id2meta: &IdToFileMeta) -> Option<Vec<IdPath>> {
+  let end_id = vec![end.id.clone()?];
+  let paths_to_end = append_parents_id(end_id, id2meta);
+  Some(paths_to_end)
+}
+
+pub fn name_path_from_id_path(id_path: &[String], id2meta: &IdToFileMeta) -> Option<String> {
+  let names = id_path
+    .iter()
+    .filter(|id| id2meta.contains_key(&id.to_string()))
+    .map(|id| {
+      let meta = id2meta.get(id).unwrap();
+      meta.name.clone().unwrap_or_else(String::new)
+    });
+  let path = PathBuf::from_iter(names);
+  Some(path.to_str()?.to_owned())
 }

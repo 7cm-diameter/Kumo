@@ -44,18 +44,17 @@ pub async fn from_args_into_ls_query(
 ) -> files::FilesListQuery {
   let mut ls_query = files::FilesListQuery::default();
 
-  if args.is_present("all") {
-    ls_query.include_items_form_all_drives(true);
-    return ls_query;
-  }
-
   if let Some(query) = args.value_of("query") {
     ls_query.overwrite_search_q(query);
     return ls_query;
   }
 
   if let Some(folder) = args.value_of("folder") {
-    let parent_id = find_parents_id(client, access_token, folder).await;
+    let parent_id = if folder == "root" {
+      String::from(folder)
+    } else {
+      find_parents_id(client, access_token, folder).await
+    };
     ls_query.overwrite_search_q(&format!("'{}' in parents", parent_id));
   }
 

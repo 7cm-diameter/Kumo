@@ -70,7 +70,6 @@ async fn main() {
         // arguments that do not takes value (flags)
         Arg::with_name("long").short("l").long("long"),
         Arg::with_name("recursive").short("r").long("recursive"),
-        Arg::with_name("all").short("A").long("all"),
         Arg::with_name("search-trashed-only")
           .short("t")
           .long("search-trashed-only"),

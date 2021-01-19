@@ -4,17 +4,10 @@ use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::path::PathBuf;
 
-pub async fn find_parents_id<'a>(
-  client: &'a Client,
-  access_token: &'a str,
-  parents_name: &'a str,
-) -> String {
-  // Fetch folders' metadata from drive
-  let folders = fetch_all_folders(client, access_token).await;
-
-  let path_components: Vec<&str> = parents_name.split('/').collect();
-  let candidate_folders: Vec<files::FileMeta> = folders
-    .iter()
+pub fn find_parents_id(expected_path: &str, id2meta: &IdToFileMeta) -> String {
+  let path_components: Vec<&str> = expected_path.split('/').collect();
+  let candidate_folders: Vec<files::FileMeta> = id2meta
+    .values()
     .filter(|f| {
       let filename = f.name.clone().unwrap_or_else(String::new);
       let basename = path_components.last().unwrap_or(&"");
@@ -23,7 +16,6 @@ pub async fn find_parents_id<'a>(
     .cloned()
     .collect();
 
-  let id2meta = hash_id_to_metadata(&folders);
   let ids_lead_to_candidates: Vec<Vec<String>> = candidate_folders
     .iter()
     .filter_map(|f| trace_id_paths(f, &id2meta))
@@ -40,7 +32,7 @@ pub async fn find_parents_id<'a>(
     .collect();
 
   for (path, ids) in paths_to_candidates.iter().zip(ids_lead_to_candidates) {
-    if path == parents_name {
+    if path == expected_path {
       return ids.last().unwrap().clone();
     }
   }

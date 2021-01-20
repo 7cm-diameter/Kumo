@@ -1,11 +1,29 @@
-use crate::gdrive::api::files;
+use crate::gdrive::{api::files, get_gdirve_client};
+use once_cell::sync::OnceCell;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::path::PathBuf;
 
-pub fn find_parents_id(expected_path: &str, id2meta: &IdToFileMeta) -> String {
+static ID2FOLDER: OnceCell<IdToFileMeta> = OnceCell::new();
+
+pub async fn get_id2folder() -> &'static IdToFileMeta {
+  if let Some(id2folder) = ID2FOLDER.get() {
+    return id2folder;
+  }
+
+  let gclient = get_gdirve_client().await;
+  let all_folders = fetch_all_folders(&gclient.client, gclient.access_token()).await;
+  let id2folder = hash_id_to_metadata(&all_folders);
+  ID2FOLDER
+    .set(id2folder)
+    .expect("Failed to fetch metafiles of folders in drive.");
+  ID2FOLDER.get().unwrap()
+}
+
+pub async fn find_parents_id(expected_path: &str) -> String {
   let path_components: Vec<&str> = expected_path.split('/').collect();
+  let id2meta = get_id2folder().await;
   let candidate_folders: Vec<files::FileMeta> = id2meta
     .values()
     .filter(|f| {
@@ -28,7 +46,7 @@ pub fn find_parents_id(expected_path: &str, id2meta: &IdToFileMeta) -> String {
 
   let paths_to_candidates: Vec<String> = ids_lead_to_candidates
     .iter()
-    .filter_map(|ids| name_path_from_id_path(ids, &id2meta))
+    .filter_map(|ids| path_from_ids(ids, &id2meta))
     .collect();
 
   for (path, ids) in paths_to_candidates.iter().zip(ids_lead_to_candidates) {
@@ -63,7 +81,7 @@ pub async fn fetch_all_contents<'a>(
     .files
 }
 
-type IdToFileMeta = HashMap<String, files::FileMeta>;
+pub type IdToFileMeta = HashMap<String, files::FileMeta>;
 
 pub fn hash_id_to_metadata(metadata: &[files::FileMeta]) -> IdToFileMeta {
   let mut hash = HashMap::new();
@@ -107,7 +125,7 @@ pub fn trace_id_paths(end: &files::FileMeta, id2meta: &IdToFileMeta) -> Option<V
   Some(paths_to_end)
 }
 
-pub fn name_path_from_id_path(id_path: &[String], id2meta: &IdToFileMeta) -> Option<String> {
+pub fn path_from_ids(id_path: &[String], id2meta: &IdToFileMeta) -> Option<String> {
   let names = id_path
     .iter()
     .filter(|id| id2meta.contains_key(&id.to_string()))

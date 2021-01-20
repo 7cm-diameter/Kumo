@@ -15,3 +15,4 @@ reqwest = { version = "*", features = ["blocking", "json", "rustls-tls"] }
 chrono = "*"
 clap = "*"
 async-trait = "*"
+once_cell = "*"

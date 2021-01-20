@@ -14,8 +14,28 @@ use oauth2::{
   read_application_secret, AccessToken, InstalledFlowAuthenticator,
   InstalledFlowReturnMethod::HTTPRedirect,
 };
+use once_cell::sync::OnceCell;
 use reqwest::Client;
 
+pub const SCOPES: &[&str] = &[
+  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/drive.metadata",
+];
+
+static GDIRVE: OnceCell<GoogleDriveClient> = OnceCell::new();
+
+pub async fn get_gdirve_client() -> &'static GoogleDriveClient {
+  if let Some(gclient) = GDIRVE.get() {
+    return gclient;
+  }
+
+  let gclient = GoogleDriveClient::default(SCOPES).await;
+  GDIRVE.set(gclient).expect("Failed to initialize client.");
+  GDIRVE.get().unwrap()
+}
+
+#[derive(Debug)]
 pub struct GoogleDriveClient {
   access_token: AccessToken,
   pub client:   Client,

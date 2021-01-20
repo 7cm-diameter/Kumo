@@ -11,7 +11,7 @@ pub async fn ls(
   access_token: &str,
   args: &ArgMatches<'_>,
 ) -> Vec<DisplayableFileData> {
-  let mut ls_query = from_args_into_ls_query(client, access_token, args).await;
+  let mut ls_query = from_args_into_ls_query(args).await;
   let show_metadata = args.is_present("long");
   let mut displayed_file: Vec<DisplayableFileData> = Vec::new();
   // TODO: Must be refactored
@@ -37,11 +37,7 @@ pub async fn ls(
 // search file type: A > q > f > F
 // search file name: A > q > m > x
 // search depth: A > r > d (cannot use without `r`)
-pub async fn from_args_into_ls_query(
-  client: &Client,
-  access_token: &str,
-  args: &ArgMatches<'_>,
-) -> files::FilesListQuery {
+pub async fn from_args_into_ls_query(args: &ArgMatches<'_>) -> files::FilesListQuery {
   let mut ls_query = files::FilesListQuery::default();
 
   if let Some(query) = args.value_of("query") {
@@ -53,9 +49,7 @@ pub async fn from_args_into_ls_query(
     let parent_id = if folder == "root" {
       String::from(folder)
     } else {
-      let id2meta =
-        utils::hash_id_to_metadata(&utils::fetch_all_folders(client, access_token).await);
-      utils::find_parents_id(folder, &id2meta)
+      utils::find_parents_id(folder).await
     };
     ls_query.overwrite_search_q(&format!("'{}' in parents", parent_id));
   }

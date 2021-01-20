@@ -1,15 +1,7 @@
 extern crate yup_oauth2 as oauth2;
 
 use clap::{App, Arg, SubCommand};
-use kumo::gdrive::GoogleDriveClient;
-
-use kumo::share::interface::Command;
-
-const SCOPES: &[&str] = &[
-  "https://www.googleapis.com/auth/drive",
-  "https://www.googleapis.com/auth/drive.file",
-  "https://www.googleapis.com/auth/drive.metadata",
-];
+use kumo::{gdrive::get_gdirve_client, share::interface::Command};
 
 #[tokio::main]
 async fn main() {
@@ -70,6 +62,7 @@ async fn main() {
         // arguments that do not takes value (flags)
         Arg::with_name("long").short("l").long("long"),
         Arg::with_name("recursive").short("r").long("recursive"),
+        Arg::with_name("with-path").short("p").long("with-path"),
         Arg::with_name("search-trashed-only")
           .short("t")
           .long("search-trashed-only"),
@@ -111,7 +104,7 @@ async fn main() {
       ]),
     ]);
 
-  let app = GoogleDriveClient::default(SCOPES).await;
+  let app = get_gdirve_client().await;
 
   let arg_matches = clap.get_matches();
 

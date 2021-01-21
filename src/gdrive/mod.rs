@@ -1,6 +1,6 @@
 pub mod api;
 pub mod command;
-pub mod utils;
+pub mod util;
 
 extern crate yup_oauth2 as oauth2;
 

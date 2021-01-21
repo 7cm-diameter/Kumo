@@ -1,6 +1,6 @@
 use crate::{
   gdrive::api::files,
-  gdrive::utils,
+  gdrive::util,
   share::util::{DisplayableFileData, FormatDisplay},
 };
 use clap::ArgMatches;
@@ -49,7 +49,7 @@ pub async fn from_args_into_ls_query(args: &ArgMatches<'_>) -> files::FilesListQ
     let parent_id = if folder == "root" {
       String::from(folder)
     } else {
-      utils::find_parents_id(folder).await
+      util::find_parents_id(folder).await
     };
     ls_query.overwrite_search_q(&format!("'{}' in parents", parent_id));
   }

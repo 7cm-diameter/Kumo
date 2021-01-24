@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use reqwest::Client;
 use std::{fs, io, path::PathBuf};
 
@@ -89,8 +90,9 @@ impl FileMeta {
   }
 }
 
+#[async_trait]
 impl util::FormatDisplay for FileMeta {
-  fn format_display(&self, with_metadata: bool) -> util::DisplayableFileData {
+  async fn format_display(&self, with_metadata: bool) -> util::DisplayableFileData {
     let filename = self
       .name
       .clone()

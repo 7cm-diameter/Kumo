@@ -8,7 +8,7 @@ pub type DisplayableFileData = String;
 
 #[async_trait]
 pub trait FormatDisplay {
-  async fn format_display(&self, with_metadata: bool) -> DisplayableFileData;
+  async fn format_display(&self, with_metadata: bool, with_path: bool) -> DisplayableFileData;
 }
 
 pub fn format_datetime<T: TimeZone>(datetime: &DateTime<T>) -> String {

@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 use std::{fs, io, path::PathBuf};
 
+use crate::gdrive::util as gutil;
 use crate::share::util;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
@@ -92,11 +93,45 @@ impl FileMeta {
 
 #[async_trait]
 impl util::FormatDisplay for FileMeta {
-  async fn format_display(&self, with_metadata: bool) -> util::DisplayableFileData {
-    let filename = self
-      .name
-      .clone()
-      .unwrap_or_else(|| String::from("Untitled"));
+  async fn format_display(
+    &self,
+    with_metadata: bool,
+    with_path: bool,
+  ) -> util::DisplayableFileData {
+    // TODO: Use helper function that create path from `FileMeta`.
+    let filename = if with_path {
+      let id2foldermeta = gutil::get_id2folder().await;
+      let parents_id = self.parents.clone().unwrap_or_default();
+      let idpath: Vec<Vec<String>> = parents_id
+        .iter()
+        .filter_map(|id| {
+          let parent_meta = id2foldermeta.get(id).unwrap();
+          gutil::trace_id_paths(&parent_meta, &id2foldermeta)
+        })
+        .flatten()
+        .collect();
+
+      if let Some(ancestors) =
+        gutil::path_from_ids(&idpath.first().unwrap_or(&Vec::new()), &id2foldermeta)
+      {
+        let path = PathBuf::from(ancestors);
+        let filename = self
+          .name
+          .clone()
+          .unwrap_or_else(|| String::from("Untitled"));
+        String::from(path.join(filename).to_str().unwrap_or(""))
+      } else {
+        self
+          .name
+          .clone()
+          .unwrap_or_else(|| String::from("Untitled"))
+      }
+    } else {
+      self
+        .name
+        .clone()
+        .unwrap_or_else(|| String::from("Untitled"))
+    };
 
     if !with_metadata {
       return filename;

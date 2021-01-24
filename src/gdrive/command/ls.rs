@@ -13,13 +13,14 @@ pub async fn ls(
 ) -> Vec<DisplayableFileData> {
   let mut ls_query = from_args_into_ls_query(args).await;
   let show_metadata = args.is_present("long");
+  let show_path = args.is_present("with-path");
   let mut displayed_file: Vec<DisplayableFileData> = Vec::new();
   // TODO: Must be refactored
   loop {
     let resp = files::files_list(client, access_token, &ls_query).await;
     let mut tmp: Vec<DisplayableFileData> = Vec::new();
     for file in resp.files {
-      tmp.push(file.format_display(show_metadata).await);
+      tmp.push(file.format_display(show_metadata, show_path).await);
     }
     displayed_file.append(&mut tmp);
     if let Some(next_page_token) = resp.next_page_token {
